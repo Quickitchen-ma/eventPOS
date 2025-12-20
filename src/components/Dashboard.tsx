@@ -1,0 +1,199 @@
+import { TrendingUp, DollarSign, ShoppingCart, Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import type { Order } from '../lib/database.types';
+
+interface StatsData {
+  todayTotal: number;
+  todayOrders: number;
+  totalOrders: number;
+  averageOrderValue: number;
+}
+
+export function Dashboard() {
+  const [stats, setStats] = useState<StatsData>({
+    todayTotal: 0,
+    todayOrders: 0,
+    totalOrders: 0,
+    averageOrderValue: 0,
+  });
+  const [topItems, setTopItems] = useState<Array<{ name: string; quantity: number; revenue: number }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+    const interval = setInterval(loadStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadStats = async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStart = today.toISOString();
+
+    const { data: allOrders, error: ordersError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'completed');
+
+    if (ordersError) {
+      console.error('Error loading orders:', ordersError);
+      setLoading(false);
+      return;
+    }
+
+    const { data: todayOrders, error: todayError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'completed')
+      .gte('created_at', todayStart);
+
+    if (todayError) {
+      console.error('Error loading today orders:', todayError);
+      setLoading(false);
+      return;
+    }
+
+    const { data: orderItems, error: itemsError } = await supabase
+      .from('order_items')
+      .select('*');
+
+    if (itemsError) {
+      console.error('Error loading order items:', itemsError);
+      setLoading(false);
+      return;
+    }
+
+    const todayTotal = (todayOrders || []).reduce((sum, order) => sum + order.total, 0);
+    const totalRevenue = (allOrders || []).reduce((sum, order) => sum + order.total, 0);
+    const averageOrderValue = (allOrders || []).length > 0
+      ? totalRevenue / (allOrders || []).length
+      : 0;
+
+    setStats({
+      todayTotal,
+      todayOrders: (todayOrders || []).length,
+      totalOrders: (allOrders || []).length,
+      averageOrderValue,
+    });
+
+    // Calculate top items
+    const itemMap = new Map<string, { quantity: number; revenue: number }>();
+    (orderItems || []).forEach((item) => {
+      const key = item.product_name;
+      const existing = itemMap.get(key) || { quantity: 0, revenue: 0 };
+      itemMap.set(key, {
+        quantity: existing.quantity + item.quantity,
+        revenue: existing.revenue + item.price * item.quantity,
+      });
+    });
+
+    const topItemsArray = Array.from(itemMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
+    setTopItems(topItemsArray);
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const statCards = [
+    {
+      icon: DollarSign,
+      label: "Revenu du jour",
+      value: `${stats.todayTotal.toFixed(2)} dh`,
+      color: 'from-emerald-500 to-emerald-600',
+      textColor: 'text-emerald-600',
+    },
+    {
+      icon: ShoppingCart,
+      label: "Commandes du jour",
+      value: stats.todayOrders.toString(),
+      color: 'from-blue-500 to-blue-600',
+      textColor: 'text-blue-600',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Panier moyen',
+      value: `${stats.averageOrderValue.toFixed(2)} dh`,
+      color: 'from-orange-500 to-orange-600',
+      textColor: 'text-orange-600',
+    },
+    {
+      icon: Clock,
+      label: 'Total commandes',
+      value: stats.totalOrders.toString(),
+      color: 'from-slate-500 to-slate-600',
+      textColor: 'text-slate-600',
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tableau de bord</h1>
+        <p className="text-gray-600">
+          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={card.label}
+              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4"
+              style={{ borderColor: card.textColor.replace('text-', 'var(--color-)') }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-600">{card.label}</h3>
+                <div className={`p-3 bg-gradient-to-br ${card.color} rounded-lg`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <p className={`text-3xl font-bold ${card.textColor}`}>{card.value}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {topItems.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Top 5 des articles</h2>
+          <div className="space-y-3">
+            {topItems.map((item, index) => (
+              <div
+                key={item.name}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 bg-emerald-600 text-white rounded-full font-semibold text-sm">
+                    {index + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate">{item.name}</p>
+                    <p className="text-sm text-gray-500">{item.quantity} vendus</p>
+                  </div>
+                </div>
+                <p className="font-bold text-emerald-600 text-lg">{item.revenue.toFixed(2)} dh</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

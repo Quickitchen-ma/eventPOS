@@ -1,0 +1,165 @@
+import { useEffect, useState } from 'react';
+import { CheckCircle2, Clock, Printer, ChevronRight } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import type { Order, OrderItem } from '../lib/database.types';
+
+interface OrderWithItems extends Order {
+  items: OrderItem[];
+}
+
+interface CurrentOrdersProps {
+  onPrint: (order: OrderWithItems) => void;
+}
+
+export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
+  const [orders, setOrders] = useState<OrderWithItems[]>([]);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadOrders();
+    const subscription = supabase
+      .channel('orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        loadOrders();
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const loadOrders = async () => {
+    const { data: ordersData, error: ordersError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+
+    if (ordersError) {
+      console.error('Error loading orders:', ordersError);
+      setLoading(false);
+      return;
+    }
+
+    const ordersWithItems = await Promise.all(
+      (ordersData || []).map(async (order) => {
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('*')
+          .eq('order_id', order.id);
+        return { ...order, items: items || [] };
+      })
+    );
+
+    setOrders(ordersWithItems);
+    setLoading(false);
+  };
+
+  const completeOrder = async (orderId: string) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'completed' })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Error completing order:', error);
+      return;
+    }
+
+    loadOrders();
+  };
+
+  if (loading) {
+    return <div className="text-center py-12 text-gray-400">Chargement des commandes...</div>;
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+        <p className="text-gray-500 text-lg">Aucune commande en attente</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {orders.map((order) => (
+        <div
+          key={order.id}
+          className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 border-amber-500"
+        >
+          <button
+            onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg">
+                <Clock className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="text-left">
+                <p className="text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
+                <p className="text-sm text-gray-500">
+                  {new Date(order.created_at).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="text-right flex items-center gap-4">
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{order.total.toFixed(2)} dh</p>
+                <p className="text-sm text-gray-500">{order.items.length} articles</p>
+              </div>
+              <ChevronRight
+                className={`w-6 h-6 text-gray-400 transition-transform ${
+                  expandedOrder === order.id ? 'rotate-90' : ''
+                }`}
+              />
+            </div>
+          </button>
+
+          {expandedOrder === order.id && (
+            <div className="border-t border-gray-100 px-6 py-4 space-y-4 bg-gray-50">
+              <div className="space-y-2">
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="font-medium text-gray-900">{item.product_name}</p>
+                      <p className="text-sm text-gray-500">
+                        {item.quantity} × {item.price.toFixed(2)} dh
+                      </p>
+                    </div>
+                    <p className="font-semibold text-gray-900">
+                      {(item.quantity * item.price).toFixed(2)} dh
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 flex gap-3">
+                <button
+                  onClick={() => onPrint({ ...order, items: order.items })}
+                  className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  <Printer className="w-5 h-5" />
+                  Imprimer ticket
+                </button>
+                <button
+                  onClick={() => completeOrder(order.id)}
+                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  Marquer prêt
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
