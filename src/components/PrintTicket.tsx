@@ -7,12 +7,27 @@ interface OrderWithItems extends Order {
 
 interface PrintTicketProps {
   order: OrderWithItems;
+  onComplete?: () => void;
 }
 
-export function PrintTicket({ order }: PrintTicketProps) {
+export function PrintTicket({ order, onComplete }: PrintTicketProps) {
   useEffect(() => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!order || !order.items || order.items.length === 0) {
+      console.error('Invalid order data for printing');
+      onComplete?.();
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=302,height=500');
+
+    if (!printWindow) {
+      console.error('Failed to open print window. Please check popup blocker.');
+      alert('Please allow popups to print tickets.');
+      onComplete?.();
+      return;
+    }
+
+    try {
 
     const timestamp = new Date(order.created_at).toLocaleString('en-US', {
       month: '2-digit',
@@ -30,17 +45,20 @@ export function PrintTicket({ order }: PrintTicketProps) {
       day: '2-digit'
     });
 
-    const itemsHtml = order.items.map(item => `
-      <div style="margin: 4px 0;">
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>${item.product_name}</span>
-          <span>${item.quantity}x ${item.price.toFixed(2)} dh</span>
+      const itemsHtml = order.items.map(item => {
+        const itemTotal = Number(item.price) * item.quantity;
+        return `
+        <div style="margin: 4px 0;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px;">
+            <span>${item.product_name || 'Unknown Item'}</span>
+            <span>${item.quantity}x ${Number(item.price).toFixed(2)} dh</span>
+          </div>
+          <div style="text-align: right; font-size: 10px; color: #666;">
+            = ${itemTotal.toFixed(2)} dh
+          </div>
         </div>
-        <div style="text-align: right; font-size: 10px; color: #666;">
-          = ${(item.price * item.quantity).toFixed(2)} dh
-        </div>
-      </div>
-    `).join('');
+      `;
+      }).join('');
 
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -165,11 +183,11 @@ export function PrintTicket({ order }: PrintTicketProps) {
             <div class="total-section">
               <div class="total-line">
                 <span>SUBTOTAL</span>
-                <span>${order.total.toFixed(2)} dh</span>
+                <span>${Number(order.total).toFixed(2)} dh</span>
               </div>
               <div class="total-line grand">
                 <span>TOTAL</span>
-                <span>${order.total.toFixed(2)} dh</span>
+                <span>${Number(order.total).toFixed(2)} dh</span>
               </div>
             </div>
 
@@ -183,16 +201,31 @@ export function PrintTicket({ order }: PrintTicketProps) {
         </html>
       `);
 
-    printWindow.document.close();
+      printWindow.document.close();
 
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-      setTimeout(() => {
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+
+          setTimeout(() => {
+            printWindow.close();
+            onComplete?.();
+          }, 1000);
+        }, 500);
+      };
+
+      printWindow.onafterprint = () => {
         printWindow.close();
-      }, 500);
-    }, 500);
-  }, [order]);
+        onComplete?.();
+      };
+
+    } catch (error) {
+      console.error('Error printing ticket:', error);
+      printWindow?.close();
+      onComplete?.();
+    }
+  }, [order, onComplete]);
 
   return null;
 }

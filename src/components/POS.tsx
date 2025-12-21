@@ -93,62 +93,78 @@ export function POS({ onOrderCreated }: POSProps) {
   };
 
   const checkout = async () => {
-    if (cart.length === 0) return;
-
-    const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-
-    const { data: lastOrder } = await supabase
-      .from('orders')
-      .select('order_number')
-      .order('order_number', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const nextOrderNumber = (lastOrder?.order_number || 0) + 1;
-    const defaultBranchId = '00000000-0000-0000-0000-000000000001';
-
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        order_number: nextOrderNumber,
-        total,
-        status: 'pending',
-        branch_id: defaultBranchId,
-      })
-      .select()
-      .single();
-
-    if (orderError || !order) {
-      console.error('Error creating order:', orderError);
+    if (cart.length === 0) {
+      console.warn('Cannot checkout with empty cart');
       return;
     }
 
-    const orderItems = cart.map((item) => ({
-      order_id: order.id,
-      product_id: item.product.id,
-      product_name: item.product.name,
-      price: item.product.price,
-      quantity: item.quantity,
-    }));
+    try {
+      const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
+      const { data: lastOrder, error: lastOrderError } = await supabase
+        .from('orders')
+        .select('order_number')
+        .order('order_number', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (itemsError) {
-      console.error('Error creating order items:', itemsError);
-      return;
+      if (lastOrderError) {
+        console.error('Error fetching last order:', lastOrderError);
+        alert('Erreur lors de la récupération du dernier numéro de commande. Veuillez réessayer.');
+        return;
+      }
+
+      const nextOrderNumber = (lastOrder?.order_number || 0) + 1;
+      const defaultBranchId = '00000000-0000-0000-0000-000000000001';
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          order_number: nextOrderNumber,
+          total,
+          status: 'pending',
+          branch_id: defaultBranchId,
+        })
+        .select()
+        .single();
+
+      if (orderError || !order) {
+        console.error('Error creating order:', orderError);
+        alert('Erreur lors de la création de la commande. Veuillez réessayer.');
+        return;
+      }
+
+      const orderItems = cart.map((item) => ({
+        order_id: order.id,
+        product_id: item.product.id,
+        product_name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error('Error creating order items:', itemsError);
+        alert('Erreur lors de la création des articles de la commande. Veuillez réessayer.');
+        return;
+      }
+
+      setLastOrderNumber(nextOrderNumber);
+      setCart([]);
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        setShowSuccess(false);
+        setLastOrderNumber(null);
+        onOrderCreated?.();
+      }, 1500);
+    } catch (error) {
+      console.error('Unexpected error during checkout:', error);
+      alert('Une erreur inattendue s\'est produite. Veuillez réessayer.');
     }
-
-    setLastOrderNumber(nextOrderNumber);
-    setCart([]);
-    setShowSuccess(true);
-
-    setTimeout(() => {
-      setShowSuccess(false);
-      setLastOrderNumber(null);
-      onOrderCreated?.();
-    }, 1500);
   };
 
   return (

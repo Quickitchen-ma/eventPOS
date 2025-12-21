@@ -110,7 +110,10 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
       </main>
 
       {orderToPrint && (
-        <PrintTicket order={orderToPrint} />
+        <PrintTicket
+          order={orderToPrint}
+          onComplete={() => setOrderToPrint(null)}
+        />
       )}
     </div>
   );
