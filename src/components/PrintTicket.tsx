@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import type { Order, OrderItem } from '../lib/database.types';
 
 interface OrderWithItems extends Order {
@@ -10,13 +10,39 @@ interface PrintTicketProps {
 }
 
 export function PrintTicket({ order }: PrintTicketProps) {
-  const printRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const printWindow = window.open('', '_blank');
-    if (printWindow && printRef.current) {
-      const printContent = printRef.current.innerHTML;
-      printWindow.document.write(`
+    if (!printWindow) return;
+
+    const timestamp = new Date(order.created_at).toLocaleString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+
+    const itemsHtml = order.items.map(item => `
+      <div style="margin: 4px 0;">
+        <div style="display: flex; justify-content: space-between; font-size: 11px;">
+          <span>${item.product_name}</span>
+          <span>${item.quantity}x ${item.price.toFixed(2)} dh</span>
+        </div>
+        <div style="text-align: right; font-size: 10px; color: #666;">
+          = ${(item.price * item.quantity).toFixed(2)} dh
+        </div>
+      </div>
+    `).join('');
+
+    printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
@@ -30,23 +56,17 @@ export function PrintTicket({ order }: PrintTicketProps) {
                 box-sizing: border-box;
               }
 
-              html, body {
-                width: 80mm;
-                height: auto;
+              @page {
+                size: 80mm auto;
+                margin: 0;
               }
 
               body {
                 font-family: 'Courier New', 'Courier', monospace;
                 background: white;
-                padding: 0;
-                margin: 0;
-              }
-
-              .ticket {
-                width: 80mm;
                 padding: 8px;
-                background: white;
-                color: black;
+                margin: 0;
+                width: 80mm;
               }
 
               .header {
@@ -57,162 +77,122 @@ export function PrintTicket({ order }: PrintTicketProps) {
               }
 
               .restaurant-name {
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: bold;
                 margin-bottom: 2px;
                 letter-spacing: 0.5px;
               }
 
               .restaurant-tagline {
-                font-size: 10px;
+                font-size: 11px;
                 color: #333;
-                margin-bottom: 4px;
+                margin-bottom: 6px;
               }
 
               .order-number {
-                font-size: 24px;
+                font-size: 26px;
                 font-weight: bold;
-                margin: 6px 0;
+                margin: 8px 0;
               }
 
               .timestamp {
-                font-size: 10px;
+                font-size: 11px;
                 color: #666;
               }
 
               .items-section {
-                margin: 8px 0;
+                margin: 12px 0;
               }
 
               .items-divider {
                 border-top: 1px dashed #000;
-                margin: 6px 0;
-              }
-
-              .item-line {
-                display: flex;
-                justify-content: space-between;
-                margin: 4px 0;
-                font-size: 11px;
-              }
-
-              .item-detail {
-                display: flex;
-                justify-content: space-between;
-                margin: 2px 0;
-                font-size: 10px;
-                color: #666;
+                margin: 8px 0;
               }
 
               .total-section {
-                border-top: 1px dashed #000;
-                border-bottom: 1px dashed #000;
-                padding: 6px 0;
-                margin: 6px 0;
+                border-top: 2px dashed #000;
+                border-bottom: 2px dashed #000;
+                padding: 8px 0;
+                margin: 8px 0;
               }
 
               .total-line {
                 display: flex;
                 justify-content: space-between;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: bold;
                 margin: 4px 0;
               }
 
+              .total-line.grand {
+                font-size: 16px;
+                margin-top: 6px;
+              }
+
               .footer {
                 text-align: center;
-                margin-top: 8px;
-                font-size: 10px;
+                margin-top: 12px;
+                font-size: 11px;
                 color: #666;
                 padding-top: 8px;
               }
 
               .footer-text {
-                margin: 2px 0;
+                margin: 3px 0;
               }
 
               @media print {
-                body { margin: 0; padding: 0; }
-                .ticket { width: 80mm; }
+                body {
+                  padding: 4px;
+                }
               }
             </style>
           </head>
           <body>
-            ${printContent}
+            <div class="header">
+              <div class="restaurant-name">OKINAWA</div>
+              <div class="restaurant-tagline">BY QUICKKITCHEN</div>
+              <div class="order-number">ORDER #${order.order_number}</div>
+              <div class="timestamp">${timestamp}</div>
+            </div>
+
+            <div class="items-section">
+              ${itemsHtml}
+            </div>
+
+            <div class="items-divider"></div>
+
+            <div class="total-section">
+              <div class="total-line">
+                <span>SUBTOTAL</span>
+                <span>${order.total.toFixed(2)} dh</span>
+              </div>
+              <div class="total-line grand">
+                <span>TOTAL</span>
+                <span>${order.total.toFixed(2)} dh</span>
+              </div>
+            </div>
+
+            <div class="footer">
+              <div class="footer-text">Thank you for your order!</div>
+              <div class="footer-text">Merci d'avoir commandé!</div>
+              <div style="border-top: 1px dashed #999; margin: 6px 0;"></div>
+              <div class="footer-text">${currentDate}</div>
+            </div>
           </body>
         </html>
       `);
-      printWindow.document.close();
+
+    printWindow.document.close();
+
+    setTimeout(() => {
       printWindow.focus();
+      printWindow.print();
       setTimeout(() => {
-        printWindow.print();
-        setTimeout(() => printWindow.close(), 500);
-      }, 300);
-    }
+        printWindow.close();
+      }, 500);
+    }, 500);
   }, [order]);
 
-  return (
-    <div ref={printRef} className="hidden">
-      <div className="ticket">
-        <div className="header">
-          <div className="restaurant-name">OKINAWA</div>
-          <div className="restaurant-tagline">BY QUICKITCHEN</div>
-          <div className="order-number">ORDER #${order.order_number}</div>
-          <div className="timestamp">
-            {new Date(order.created_at).toLocaleString('en-US', {
-              month: '2-digit',
-              day: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
-            })}
-          </div>
-        </div>
-
-        <div className="items-section">
-          {order.items.map((item) => (
-            <div key={item.id}>
-              <div className="item-line">
-                <span>{item.product_name}</span>
-                <span>{item.quantity}x</span>
-                <span>{item.price.toFixed(2)} dh</span>
-              </div>
-              <div className="item-detail">
-                <span></span>
-                <span>= {(item.price * item.quantity).toFixed(2)} dh</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="items-divider"></div>
-
-        <div className="total-section">
-          <div className="total-line">
-            <span>SUBTOTAL</span>
-            <span>{order.total.toFixed(2)} dh</span>
-          </div>
-          <div className="total-line" style={{ fontSize: '14px' }}>
-            <span>TOTAL</span>
-            <span>{order.total.toFixed(2)} dh</span>
-          </div>
-        </div>
-
-        <div className="footer">
-          <div className="footer-text">Thank you for your order!</div>
-          <div className="footer-text">Merci d'avoir commandé!</div>
-          <div className="items-divider" style={{ marginTop: '4px' }}></div>
-          <div className="footer-text" style={{ marginTop: '4px' }}>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'short',
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }
