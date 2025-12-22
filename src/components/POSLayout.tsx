@@ -44,7 +44,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
               <img src="/icone.png" alt="Okinawa" className="w-10 h-10 rounded-lg" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">POS</h1>
-                <p className="text-xs text-gray-500">By QuicKitchen</p>
+                <p className="text-xs text-gray-500">By Quickitchen</p>
               </div>
             </div>
 
