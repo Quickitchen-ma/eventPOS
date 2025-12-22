@@ -131,7 +131,7 @@ export function ManagerDashboard() {
         const { data: pendingOrders } = await supabase
           .from('orders')
           .select('*')
-          .neq('status', 'completed')
+          .eq('status', 'pending')
           .eq('branch_id', branch.id);
 
         // Previous period for comparison
