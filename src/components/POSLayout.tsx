@@ -8,6 +8,7 @@ import { Dashboard } from './Dashboard';
 import { ManagerDashboard } from './ManagerDashboard';
 import { PrintTicket } from './PrintTicket';
 import type { Order, OrderItem } from '../lib/database.types';
+import { APP_NAME, APP_VERSION } from '../lib/version';
 
 interface OrderWithItems extends Order {
   items: OrderItem[];
@@ -39,8 +40,8 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-50 to-gray-100">
       {/* Desktop Navigation */}
       <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-0">
-          <div className="flex items-center h-16 gap-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-2 md:py-0">
+          <div className="flex items-center justify-between h-16 gap-4">
             <div className="flex items-center gap-3">
               <img src="/icone.png" alt="Okinawa" className="w-10 h-10 rounded-lg" />
               <div>
@@ -67,7 +68,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="text-right">
+              <div className="text-right w-10">
                 <p className="text-sm font-medium text-gray-900">{user?.full_name}</p>
                 <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
               </div>
@@ -129,6 +130,11 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'manager' && <ManagerDashboard />}
       </main>
+
+      {/* Footer */}
+      <footer className="mt-8 text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
+        {APP_NAME} - Version {APP_VERSION}
+      </footer>
 
       {orderToPrint && (
         <PrintTicket
