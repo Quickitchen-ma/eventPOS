@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { BarChart3, TrendingUp, DollarSign, Package, AlertTriangle, Clock, Users, ShoppingCart, Menu, Settings, Plus, Edit, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabase';
@@ -64,6 +64,9 @@ export function ManagerDashboard() {
   const [categoryImageUrl, setCategoryImageUrl] = useState('');
   const [categorySortOrder, setCategorySortOrder] = useState(0);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageSource, setImageSource] = useState<'url' | 'library'>('library');
+  const [libraryImages, setLibraryImages] = useState<string[]>([]);
+  const menuManagementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadStats();
@@ -190,6 +193,7 @@ export function ManagerDashboard() {
     await loadMenus();
     await loadAllCategories();
     await loadAllProducts();
+    await loadLibraryImages();
 
     setLoading(false);
   };
@@ -234,6 +238,214 @@ export function ManagerDashboard() {
     }
 
     setAllProducts(data || []);
+  };
+
+  const loadLibraryImages = async () => {
+    // For now, we'll hardcode the library images since we can't dynamically read the folder
+    // In a real application, you might want to create an API endpoint to list these files
+    const images = [
+      '2021-12-04-61abb64c41432.png',
+      '2021-12-08-61b0c9de723d3.png',
+      '2021-12-08-61b0c93eb8b19.png',
+      '2021-12-08-61b0ca4f2dd20.png',
+      '2021-12-08-61b0cb587ec50.png',
+      '2021-12-08-61b0cc6f2102a.png',
+      '2021-12-08-61b0d02a06972.png',
+      '2021-12-08-61b0d7a5d1e43.png',
+      '2021-12-08-61b0d7dd04436.png',
+      '2021-12-08-61b0d9c8d26b7.png',
+      '2021-12-08-61b0d98c656df.png',
+      '2021-12-08-61b0d00584d95.png',
+      '2021-12-08-61b0d962e9eb0.png',
+      '2021-12-08-61b0d7895c900.png',
+      '2021-12-08-61b0d43422e39.png',
+      '2021-12-08-61b0da006af72.png',
+      '2021-12-08-61b0dae57d44b.png',
+      '2021-12-08-61b0db0822aa3.png',
+      '2021-12-08-61b0db764682c.png',
+      '2021-12-08-61b0dbb38e9e2.png',
+      '2021-12-08-61b0dbfd44f0f.png',
+      '2021-12-08-61b0dc1f062cc.png',
+      '2021-12-08-61b0dc3c8cead.png',
+      '2021-12-08-61b0dc6c88807.png',
+      '2021-12-08-61b0dcacc238b.png',
+      '2021-12-08-61b0dcd69f395.png',
+      '2021-12-08-61b0dd2b8d561.png',
+      '2021-12-08-61b0dd4a092d4.png',
+      '2021-12-08-61b0dd7ebe3b8.png',
+      '2021-12-08-61b0dd11a53d0.png',
+      '2021-12-08-61b0dd6108261.png',
+      '2021-12-08-61b0ddab0612c.png',
+      '2021-12-08-61b0ddd87f07f.png',
+      '2021-12-08-61b0ddf80e25a.png',
+      '2021-12-08-61b0de4a665d6.png',
+      '2021-12-08-61b0de9ce2e88.png',
+      '2021-12-08-61b0deb4e58d8.png',
+      '2021-12-08-61b0defa701f5.png',
+      '2021-12-08-61b0df3ed9958.png',
+      '2021-12-08-61b0df9bd0c3f.png',
+      '2021-12-08-61b0df6244b0a.png',
+      '2021-12-08-61b0df29943de.png',
+      '2021-12-08-61b0dfbad410e.png',
+      '2021-12-08-61b0dfd530fe2.png',
+      '2021-12-08-61b0e031d6bc4.png',
+      '2021-12-08-61b0e0087df80.png',
+      '2022-10-20-6351c1fcb4abb.png',
+      '2022-10-20-6351c4e1274b9.png',
+      '2022-10-20-6351c5cdd18aa.png',
+      '2022-10-20-6351c7e21787f.png',
+      '2022-10-20-6351c8ce714fa.png',
+      '2022-10-20-6351c10a0e6ba.png',
+      '2022-10-20-6351c852c9613.png',
+      '2022-10-20-6351c982cf00b.png',
+      '2022-10-20-6351ca231ce86.png',
+      '2022-10-20-6351ca60608e6.png',
+      '2022-10-20-6351caa48213d.png',
+      '2022-10-20-6351cbc2782f2.png',
+      '2022-10-20-6351cbf29b65f.png',
+      '2022-10-20-6351cf791962a.png',
+      '2022-10-20-6351cfc526f62.png',
+      '2022-10-20-6351cff99f6c9.png',
+      '2022-10-20-6351d0f510660.png',
+      '2022-10-20-6351d0fbc3e2f.png',
+      '2022-10-20-6351d0448b864.png',
+      '2022-10-20-635193eb6d20a.png',
+      '2022-10-21-6351d52989468.png',
+      '2023-01-31-63d973a649f51.png',
+      '2023-01-31-63d973d70dfd8.png',
+      '2023-01-31-63d973df08584.png',
+      '2023-01-31-63d973e71d1e1.png',
+      '2023-01-31-63d973e6722d8.png',
+      '2023-01-31-63d974f759302.png',
+      '2023-01-31-63d9739f6bebc.png',
+      '2023-04-24-6446e8d5b359e.png',
+      '2023-04-24-6446e8dc714e4.png',
+      '2023-04-24-6446e8e06d00b.png',
+      '2023-04-24-6446e8e35fe6e.png',
+      '2023-04-24-6446e8f472e72.png',
+      '2023-04-24-6446e9a00a599.png',
+      '2023-04-24-6446e9a72cfd9.png',
+      '2023-04-24-6446e9a4444d8.png',
+      '2023-04-24-6446e9e8beb7b.png',
+      '2023-04-24-6446e86d2a6ac.png',
+      '2023-04-24-6446e95f3f148.png',
+      '2023-04-24-6446e97d6457c.png',
+      '2023-04-24-6446e99cbab3b.png',
+      '2023-04-24-6446e998c0ef7.png',
+      '2023-04-24-6446e9098b27c.png',
+      '2023-04-24-6446e86894a75.png',
+      '2023-04-24-6446e95916fa9.png',
+      '2023-04-24-6446e96383bb9.png',
+      '2023-04-24-6446e862147aa.png',
+      '2023-04-24-6446e8702036a.png',
+      '2023-04-24-6446ea0e118d1.png',
+      '2023-04-24-6446ea2cd600b.png',
+      '2023-04-24-6446ea28b4170.png',
+      '2023-04-24-6446ea147c0e2.png',
+      '2023-04-24-6446ea12564eb.png',
+      '2023-04-24-6446eb3c68fe9.png',
+      '2023-04-24-6446eb434d349.png',
+      '2023-04-24-6446eb36707b7.png',
+      '2023-04-24-6446eb3977857.png',
+      '2023-04-24-6446ec6d3d3c9.png',
+      '2023-04-24-6446ec6fcd938.png',
+      '2023-04-24-6446ec72cc578.png',
+      '2023-04-24-6446ec684c81c.png',
+      '2023-04-24-6446f5b70fc1f.png',
+      '2023-04-24-6446f5c4d28c5.png',
+      '2023-04-25-64471cc796086.png',
+      '2023-04-25-64471ccc9f2e6.png',
+      '2023-04-25-64471ccf5a329.png',
+      '2023-04-25-64471d2b7e6f5.png',
+      '2023-04-25-64471d2f3c104.png',
+      '2023-04-25-64471d26e0fe7.png',
+      '2023-04-25-64471d31d70e0.png',
+      '2023-04-25-64471d3008853.png',
+      '2023-04-25-644701a42aa1c.png',
+      '2023-04-25-644701a65caab.png',
+      '2023-04-25-644701b5dbfd9.png',
+      '2023-04-25-644701c0ebc5f.png',
+      '2023-04-25-644701c2d6807.png',
+      '2023-04-25-644717d9575fb.png',
+      '2023-04-25-644717de5f0ae.png',
+      '2023-04-25-644717e0a6e24.png',
+      '2023-04-25-644717e2ccca4.png',
+      '2023-04-25-644847fcc4573.png',
+      '2023-04-25-644848f29e6ff.png',
+      '2023-04-25-6447013a7b87c.png',
+      '2023-04-25-6447013ed0088.png',
+      '2023-04-25-6447017ba5ad9.png',
+      '2023-04-25-6447018d19a46.png',
+      '2023-04-25-6447024d03175.png',
+      '2023-04-25-6447025aa0d72.png',
+      '2023-04-25-6447026bdcdce.png',
+      '2023-04-25-6447026c1cd3a.png',
+      '2023-04-25-6447026c00803.png',
+      '2023-04-25-6447027d081aa.png',
+      '2023-04-25-6447027e4baed.png',
+      '2023-04-25-6447027e6bf66.png',
+      '2023-04-25-6447052ea6d1a.png',
+      '2023-04-25-6447053a08652.png',
+      '2023-04-25-6448483f7b675.png',
+      '2023-04-25-6448484b553a4.png',
+      '2023-04-25-64470130bbc64.png',
+      '2023-04-25-64470266f093e.png',
+      '2023-04-25-64470271a0bcb.png',
+      '2023-04-25-64470276ca456.png',
+      '2023-04-25-64472143a6160.png',
+      '2023-04-25-64472145bf7ff.png',
+      '2023-04-25-64484840e4579.png',
+      '2023-04-25-64484843aff25.png',
+      '2023-04-25-64484845cf125.png',
+      '2023-04-25-64484852db8d1.png',
+      '2023-04-25-644702715d5c8.png',
+      '2023-04-25-644721405b9de.png',
+      '2023-04-25-644848517f1ad.png',
+      '2023-04-25-644848544a25e.png',
+      '2023-04-25-6447018170e71.png',
+      '2023-04-25-64470192594b0.png',
+      '2023-04-25-644848333589b.png',
+      '2023-04-25-6448483925619.png',
+      '2023-04-26-644878ff4d2e8.png',
+      '2023-04-26-644879473fd43.png',
+      '2023-04-26-64487928655b4.png',
+      '2023-04-26-644879062400c.png',
+      '2023-09-06-64f83b1948ac3.png',
+      '2023-11-08-654bc042e8fb3.png',
+      '2023-12-29-658f239342fbe.png',
+      '2023-12-29-658f24574886a.png',
+      '2024-08-02-66acf7cfa8cb4.png',
+      '2024-08-02-66acf8a882c1d.png',
+      '2024-08-02-66acf943a2a8e.png',
+      '2024-08-02-66acf79158c8b.png',
+      '2024-08-02-66acfa2c7a0a8.png',
+      '2024-08-02-66acfa71c5545.png',
+      '2024-08-02-66acfad3202ba.png',
+      '2024-08-02-66acfb2f8fba3.png',
+      '2024-08-02-66acfb665db9c.png',
+      '2024-08-02-66acfea22874b.png',
+      '2024-08-02-66acfee5a2476.png',
+      '2024-08-02-66acff13c121d.png',
+      '2024-08-02-66acff637dc16.png',
+      '2024-08-02-66acff810bbb4.png',
+      '2024-08-02-66acffe8cb2ab.png',
+      '2024-08-02-66ad0ace7a1ef.png',
+      '2024-08-02-66ad0b3a1bb3a.png',
+      '2024-08-02-66ad0b7f9dbe4.png',
+      '2024-08-02-66ad0bd117788.png',
+      '2024-08-02-66ad0fb7b16fa.png',
+      '2024-08-02-66ad06f4ea23e.png',
+      '2024-08-02-66ad07bd111e8.png',
+      '2024-08-02-66ad09bccc6a7.png',
+      '2024-08-02-66ad10ddd098b.png',
+      '2024-08-02-66ad074a18d7b.png',
+      '2024-08-02-66ad0604e217d.png',
+      '2024-08-02-66ad0888c2d6e.png',
+      '2024-08-02-66ad1017cf96f.png',
+      '2024-08-02-66ad10641a573.png',
+      '2024-08-02-66ad06743607f.png'
+    ];
+    setLibraryImages(images);
   };
 
   const createMenu = async (name: string, description: string) => {
@@ -413,6 +625,7 @@ export function ManagerDashboard() {
     setProductCategoryId(allCategories[0]?.id || '');
     setProductAvailable(true);
     setProductSortOrder(0);
+    setImageSource('library');
     setShowProductModal(true);
   };
 
@@ -838,7 +1051,19 @@ export function ManagerDashboard() {
           ))}
         </div>
         <button
-          onClick={() => setShowMenuManagement(!showMenuManagement)}
+          onClick={() => {
+            const newState = !showMenuManagement;
+            setShowMenuManagement(newState);
+            if (newState) {
+              // Scroll to menu management section after a short delay to allow rendering
+              setTimeout(() => {
+                menuManagementRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }, 100);
+            }
+          }}
           className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
             showMenuManagement
               ? 'bg-green-600 text-white shadow-lg'
@@ -1041,13 +1266,13 @@ export function ManagerDashboard() {
 
       {/* Menu Management Section */}
       {showMenuManagement && (
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div ref={menuManagementRef} className="bg-white rounded-xl shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <Menu className="w-5 h-5 text-gray-600" />
             Gestion des menus
           </h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Categories Management */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Catégories</h3>
@@ -1126,7 +1351,16 @@ export function ManagerDashboard() {
 
             {/* Products Management */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Gestion des produits</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Gestion des produits</h3>
+                <button
+                  onClick={openCreateProductModal}
+                  className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un produit
+                </button>
+              </div>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {allProducts.map((product) => (
                   <div key={product.id} className="border border-gray-200 rounded-lg p-3">
@@ -1167,13 +1401,6 @@ export function ManagerDashboard() {
                     </div>
                   </div>
                 ))}
-                <button
-                  onClick={openCreateProductModal}
-                  className="w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Ajouter un produit
-                </button>
               </div>
             </div>
 
@@ -1345,37 +1572,114 @@ export function ManagerDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL de l'image du produit
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image du produit
                 </label>
-                <input
-                  type="url"
-                  value={productImageUrl}
-                  onChange={(e) => setProductImageUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  placeholder="https://example.com/image.jpg"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Entrez l'URL d'une image pour ce produit
-                </p>
+
+                {/* Tab selector */}
+                <div className="flex border-b border-gray-200 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setImageSource('library')}
+                    className={`px-4 py-2 text-sm font-medium ${
+                      imageSource === 'library'
+                        ? 'border-b-2 border-brand-500 text-brand-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Bibliothèque
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageSource('url')}
+                    className={`px-4 py-2 text-sm font-medium ${
+                      imageSource === 'url'
+                        ? 'border-b-2 border-brand-500 text-brand-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    URL personnalisée
+                  </button>
+                </div>
+
+                {imageSource === 'library' ? (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-2">
+                      Cliquez sur une image pour la sélectionner
+                    </p>
+                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
+                      {libraryImages.map((imageName) => (
+                        <button
+                          key={imageName}
+                          type="button"
+                          onClick={() => setProductImageUrl(`/products/library/${imageName}`)}
+                          className={`relative border-2 rounded-md overflow-hidden hover:border-brand-500 transition-colors ${
+                            productImageUrl === `/products/library/${imageName}`
+                              ? 'border-brand-500 ring-2 ring-brand-200'
+                              : 'border-gray-200'
+                          }`}
+                        >
+                          <img
+                            src={`/products/library/${imageName}`}
+                            alt={imageName}
+                            className="w-full h-16 object-cover"
+                            onError={(e) => {
+                              // Hide broken images
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="url"
+                      value={productImageUrl}
+                      onChange={(e) => setProductImageUrl(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Entrez l'URL d'une image personnalisée
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Catégorie *
                 </label>
-                <select
-                  value={productCategoryId}
-                  onChange={(e) => setProductCategoryId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="">Sélectionner une catégorie</option>
-                  {allCategories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={productCategoryId}
+                    onChange={(e) => setProductCategoryId(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
+                    <option value="">Sélectionner une catégorie</option>
+                    {allCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProductModal(false);
+                      setTimeout(() => openCreateCategoryModal(), 100);
+                    }}
+                    className="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                    title="Créer une nouvelle catégorie"
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Cliquez sur + pour créer une nouvelle catégorie
+                </p>
               </div>
 
               <div>
