@@ -8,6 +8,7 @@ interface StatsData {
   todayOrders: number;
   totalOrders: number;
   averageOrderValue: number;
+  cancelledOrders: number;
 }
 
 export function Dashboard() {
@@ -16,6 +17,7 @@ export function Dashboard() {
     todayOrders: 0,
     totalOrders: 0,
     averageOrderValue: 0,
+    cancelledOrders: 0,
   });
   const [topItems, setTopItems] = useState<Array<{ name: string; quantity: number; revenue: number }>>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,19 @@ export function Dashboard() {
       return;
     }
 
+    // Get cancelled orders count
+    const { count: cancelledOrdersCount, error: cancelledError } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'cancelled')
+      .gte('created_at', startISOString);
+
+    if (cancelledError) {
+      console.error('Error loading cancelled orders:', cancelledError);
+      setLoading(false);
+      return;
+    }
+
     const filteredTotal = (filteredOrders || []).reduce((sum, order) => sum + order.total, 0);
     const averageOrderValue = (filteredOrders || []).length > 0
       ? filteredTotal / (filteredOrders || []).length
@@ -85,6 +100,7 @@ export function Dashboard() {
       todayOrders: (filteredOrders || []).length,
       totalOrders: (filteredOrders || []).length,
       averageOrderValue,
+      cancelledOrders: cancelledOrdersCount || 0,
     });
 
     // Calculate top items
@@ -110,8 +126,8 @@ export function Dashboard() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
             <div key={i} className="h-32 bg-gray-200 rounded-xl" />
           ))}
         </div>
@@ -148,6 +164,13 @@ export function Dashboard() {
       color: 'from-slate-500 to-slate-600',
       textColor: 'text-slate-600',
     },
+    {
+      icon: () => <span className="text-white font-bold text-lg">✗</span>,
+      label: 'Commandes annulées',
+      value: stats.cancelledOrders.toString(),
+      color: 'from-red-500 to-red-600',
+      textColor: 'text-red-600',
+    },
   ];
 
   return (
@@ -179,7 +202,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { BarChart3, TrendingUp, DollarSign, Package, AlertTriangle, Clock, Users, ShoppingCart, Menu, Settings, Plus, Edit, Trash2 } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Package, AlertTriangle, Clock, Users, ShoppingCart, Menu, Settings, Plus, Edit, Trash2, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabase';
 import type { Branch, Menu as MenuType, Category, Product } from '../lib/database.types';
@@ -16,6 +16,7 @@ interface BranchStats {
   monthOrders: number;
   totalOrders: number;
   pendingOrders: number;
+  cancelledOrders: number;
   previousPeriodRevenue: number;
   previousPeriodOrders: number;
 }
@@ -134,6 +135,13 @@ export function ManagerDashboard() {
           .eq('status', 'pending')
           .eq('branch_id', branch.id);
 
+        // Cancelled orders
+        const { data: cancelledOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('status', 'cancelled')
+          .eq('branch_id', branch.id);
+
         // Previous period for comparison
         const { data: prevWeekOrders } = await supabase
           .from('orders')
@@ -169,6 +177,7 @@ export function ManagerDashboard() {
           monthOrders: (monthOrders || []).length,
           totalOrders: (allOrders || []).length,
           pendingOrders: (pendingOrders || []).length,
+          cancelledOrders: (cancelledOrders || []).length,
           previousPeriodRevenue: timeRange === 'week' ? prevWeekRevenue : prevMonthRevenue,
           previousPeriodOrders: timeRange === 'week' ? (prevWeekOrders || []).length : (prevMonthOrders || []).length,
         };
@@ -1007,6 +1016,7 @@ export function ManagerDashboard() {
   const totalCompanyOrders = branches.reduce((sum, s) => sum + getCurrentOrders(s), 0);
 
   const totalPendingOrders = branches.reduce((sum, s) => sum + s.pendingOrders, 0);
+  const totalCancelledOrders = branches.reduce((sum, s) => sum + s.cancelledOrders, 0);
 
   if (loading) {
     return <div className="text-center py-12 text-gray-400">Chargement des statistiques...</div>;
@@ -1076,7 +1086,7 @@ export function ManagerDashboard() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <div className="bg-white rounded-xl shadow-md p-4 md:p-6 border-l-4 border-brand-500">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-700">Revenu total</h3>
@@ -1121,6 +1131,15 @@ export function ManagerDashboard() {
               : '0.0'}%
           </p>
           <p className="text-sm text-gray-500">Commandes complétées</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">Commandes annulées</h3>
+            <X className="w-6 h-6 text-red-600" />
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-red-600 mb-2">{totalCancelledOrders}</p>
+          <p className="text-sm text-gray-500">Total annulées</p>
         </div>
       </div>
 
@@ -1177,7 +1196,7 @@ export function ManagerDashboard() {
                       <span className="text-xs text-gray-500">{stat.branch.location}</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600">Revenu</p>
                       <p className="font-bold text-brand-600">
@@ -1191,6 +1210,10 @@ export function ManagerDashboard() {
                     <div>
                       <p className="text-gray-600">En attente</p>
                       <p className="font-bold text-orange-600">{stat.pendingOrders}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Annulées</p>
+                      <p className="font-bold text-red-600">{stat.cancelledOrders}</p>
                     </div>
                   </div>
                 </button>
@@ -1252,6 +1275,10 @@ export function ManagerDashboard() {
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
                 <p className="text-sm text-orange-700 font-medium">Commandes en attente</p>
                 <p className="text-2xl md:text-3xl font-bold text-orange-600 mt-1">{selectedStats.pendingOrders}</p>
+              </div>
+              <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg">
+                <p className="text-sm text-red-700 font-medium">Commandes annulées</p>
+                <p className="text-2xl md:text-3xl font-bold text-red-600 mt-1">{selectedStats.cancelledOrders}</p>
               </div>
               <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-4 rounded-lg">
                 <p className="text-sm text-slate-700 font-medium">Revenu total historique</p>
