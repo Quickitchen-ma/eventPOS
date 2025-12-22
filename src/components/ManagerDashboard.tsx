@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, DollarSign, Package, AlertTriangle, Clock, Users
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabase';
 import type { Branch, Menu as MenuType, Category, Product } from '../lib/database.types';
+import { APP_NAME, APP_VERSION } from '../lib/version';
 
 interface BranchStats {
   branch: Branch;
@@ -801,8 +802,8 @@ export function ManagerDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tableau de bord de gestion</h1>
-        <p className="text-gray-600">Analytique multi-succursales et suivi des performances</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Caisse enregistreuse Quickitchen</h1>
+        <p className="text-gray-600">Tableau de bord de gestion et analytique multi-succursales</p>
       </div>
 
       {/* Alerts */}
@@ -1490,6 +1491,11 @@ export function ManagerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Version Footer */}
+      <div className="mt-8 text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
+        {APP_NAME} - Version {APP_VERSION}
+      </div>
     </div>
   );
 }

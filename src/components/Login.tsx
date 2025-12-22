@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LogIn, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { APP_VERSION } from '../lib/version';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -29,10 +30,11 @@ export function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <img src="/icone.png" alt="Okinawa" className="w-20 h-20 rounded-xl" />
+              <img src="/icone.png" alt="Quickitchen" className="w-20 h-20 rounded-xl" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">OKINAWA</h1>
-            <p className="text-gray-600">Système de caisse</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Caisse enregistreuse</h1>
+            <p className="text-lg text-brand-600 font-medium">by Quickitchen</p>
+            <p className="text-xs text-gray-500 mt-1">Version {APP_VERSION}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

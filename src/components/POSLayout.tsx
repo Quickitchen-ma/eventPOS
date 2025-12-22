@@ -43,7 +43,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
             <div className="flex items-center gap-3">
               <img src="/icone.png" alt="Okinawa" className="w-10 h-10 rounded-lg" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">OKINAWA</h1>
+                <h1 className="text-xl font-bold text-gray-900">POS</h1>
                 <p className="text-xs text-gray-500">By QuicKitchen</p>
               </div>
             </div>

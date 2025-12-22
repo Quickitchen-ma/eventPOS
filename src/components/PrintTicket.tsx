@@ -231,8 +231,8 @@ export function PrintTicket({ order, onComplete }: PrintTicketProps) {
           </head>
           <body>
             <div class="header">
-              <div class="restaurant-name">OKINAWA</div>
-              <div class="restaurant-tagline">BY QUICKITCHEN</div>
+              <div class="restaurant-name">Quickitchen</div>
+              <div class="restaurant-tagline">Asian, Italian, American & Beyond</div>
               <div class="order-number">ORDER #${order.order_number}</div>
               <div class="timestamp">${timestamp}</div>
             </div>
@@ -257,6 +257,7 @@ export function PrintTicket({ order, onComplete }: PrintTicketProps) {
             <div class="footer">
               <div class="footer-text">Thank you for your order!</div>
               <div class="footer-text">Merci d'avoir commandé!</div>
+              <div class="footer-text">www.quickitchen.ma</div>
               <div style="border-top: 1px dashed #999; margin: 6px 0;"></div>
               <div class="footer-text">${currentDate}</div>
             </div>
