@@ -37,6 +37,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-50 to-gray-100">
+      {/* Desktop Navigation */}
       <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-0">
           <div className="flex items-center h-16 gap-4">
@@ -48,7 +49,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
               </div>
             </div>
 
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg mx-auto">
+            <div className="hidden md:flex gap-1 bg-gray-100 p-1 rounded-lg mx-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -60,7 +61,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
                   }`}
                 >
                   {tab.icon}
-                  <span className="hidden md:inline">{tab.label}</span>
+                  <span>{tab.label}</span>
                 </button>
               ))}
             </div>
@@ -82,7 +83,27 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      {/* Mobile Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div className="flex justify-around py-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+                activeTab === tab.id
+                  ? 'text-brand-600 bg-brand-50'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {tab.icon}
+              <span className="text-xs">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-20 md:pb-8">
         {activeTab === 'pos' && (
           <POS
             onOrderCreated={() => {

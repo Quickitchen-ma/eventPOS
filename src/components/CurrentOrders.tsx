@@ -291,58 +291,60 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
         >
           <button
             onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
-            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
           >
-            <div className="flex items-center gap-4 flex-1">
-              <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg">
+            <div className="flex items-center gap-2 md:gap-4 flex-1">
+              <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-amber-100 rounded-lg">
                 {getPriorityIcon(order.created_at!)}
               </div>
-              <div className="text-left flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
+              <div className="text-left flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-lg md:text-xl md:text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
                   {user?.role === 'manager' && order.branch_name && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {order.branch_name}
                     </span>
                   )}
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Timer className="w-4 h-4" />
-                    <span>{getElapsedTime(order.created_at!)}</span>
-                  </div>
                 </div>
-                <div className="flex items-center gap-4 mt-1">
-                  <p className="text-sm text-gray-500">
-                    Créée à {new Date(order.created_at!).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <User className="w-4 h-4" />
+                <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-xs md:text-sm text-gray-600">
+                      <Timer className="w-3 h-3 md:w-4 md:h-4" />
+                      <span>{getElapsedTime(order.created_at!)}</span>
+                    </div>
+                    <p className="text-xs md:text-sm text-gray-500">
+                      {new Date(order.created_at!).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs md:text-sm text-gray-600">
+                    <User className="w-3 h-3 md:w-4 md:h-4" />
                     <span>Client sur place</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     En préparation
                   </span>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-xs md:text-sm text-gray-600 truncate">
                     {order.items.length} article{order.items.length > 1 ? 's' : ''}: {order.items.map(item => item.product_name).join(', ')}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="text-right flex items-center gap-4">
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
+            <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
+              <div className="hidden md:block text-right">
+                <p className="text-base md:text-lg md:text-xl md:text-2xl font-bold text-gray-900 leading-tight">
                   {editingOrderId === order.id ? calculateTotal(editedItems).toFixed(2) : order.total.toFixed(2)} dh
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs md:text-sm text-gray-500 leading-tight">
                   {editingOrderId === order.id ? editedItems.length : order.items.length} article{(editingOrderId === order.id ? editedItems.length : order.items.length) > 1 ? 's' : ''}
                 </p>
               </div>
               <ChevronRight
-                className={`w-6 h-6 text-gray-400 transition-transform ${
+                className={`w-4 h-4 md:w-5 md:h-5 md:w-6 md:h-6 text-gray-400 transition-transform flex-shrink-0 ml-auto ${
                   expandedOrder === order.id ? 'rotate-90' : ''
                 }`}
               />
@@ -461,21 +463,21 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 pt-4 flex gap-3">
+              <div className="border-t border-gray-200 pt-4 flex flex-col md:flex-row gap-2 md:gap-3">
                 {editingOrderId === order.id ? (
                   <>
                     <button
                       onClick={cancelEditing}
-                      className="flex items-center justify-center gap-2 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                      className="flex items-center justify-center gap-2 bg-gray-600 text-white py-2 md:py-3 px-3 md:px-4 rounded-lg hover:bg-gray-700 transition-colors text-sm md:text-base font-medium"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4 md:w-5 md:h-5" />
                       Annuler
                     </button>
                     <button
                       onClick={saveChanges}
-                      className="flex-1 flex items-center justify-center gap-2 bg-brand-600 text-white py-3 rounded-lg hover:bg-brand-700 transition-colors font-medium"
+                      className="flex-1 flex items-center justify-center gap-2 bg-brand-600 text-white py-2 md:py-3 rounded-lg hover:bg-brand-700 transition-colors text-sm md:text-base font-medium"
                     >
-                      <Save className="w-5 h-5" />
+                      <Save className="w-4 h-4 md:w-5 md:h-5" />
                       Sauvegarder
                     </button>
                   </>
@@ -485,32 +487,32 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
                       <>
                         <button
                           onClick={() => startEditing(order)}
-                          className="flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          className="flex items-center justify-center gap-2 bg-blue-600 text-white py-2 md:py-3 px-3 md:px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base font-medium"
                         >
-                          <Edit3 className="w-5 h-5" />
+                          <Edit3 className="w-4 h-4 md:w-5 md:h-5" />
                           Modifier
                         </button>
                         <button
                           onClick={() => cancelOrder(order.id)}
-                          className="flex items-center justify-center gap-2 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium"
+                          className="flex items-center justify-center gap-2 bg-red-600 text-white py-2 md:py-3 px-3 md:px-4 rounded-lg hover:bg-red-700 transition-colors text-sm md:text-base font-medium"
                         >
-                          <X className="w-5 h-5" />
+                          <X className="w-4 h-4 md:w-5 md:h-5" />
                           Annuler commande
                         </button>
                       </>
                     )}
                     <button
                       onClick={() => onPrint({ ...order, items: order.items })}
-                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 md:py-3 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base font-medium"
                     >
-                      <Printer className="w-5 h-5" />
+                      <Printer className="w-4 h-4 md:w-5 md:h-5" />
                       Imprimer ticket
                     </button>
                     <button
                       onClick={() => completeOrder(order.id)}
-                      className="flex-1 flex items-center justify-center gap-2 bg-brand-600 text-white py-3 rounded-lg hover:bg-brand-700 transition-colors font-medium"
+                      className="flex-1 flex items-center justify-center gap-2 bg-brand-600 text-white py-2 md:py-3 rounded-lg hover:bg-brand-700 transition-colors text-sm md:text-base font-medium"
                     >
-                      <CheckCircle2 className="w-5 h-5" />
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
                       Marquer prêt
                     </button>
                   </>

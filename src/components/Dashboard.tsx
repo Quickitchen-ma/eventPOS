@@ -19,22 +19,42 @@ export function Dashboard() {
   });
   const [topItems, setTopItems] = useState<Array<{ name: string; quantity: number; revenue: number }>>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'today' | 'yesterday' | 'week' | 'month'>('today');
 
   useEffect(() => {
     loadStats();
     const interval = setInterval(loadStats, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [filter]);
 
   const loadStats = async () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStart = today.toISOString();
+    const now = new Date();
+    let startDate: Date;
 
-    const { data: allOrders, error: ordersError } = await supabase
+    switch (filter) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'yesterday':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        break;
+      case 'week':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+
+    const startISOString = startDate.toISOString();
+
+    const { data: filteredOrders, error: ordersError } = await supabase
       .from('orders')
       .select('*')
-      .eq('status', 'completed');
+      .eq('status', 'completed')
+      .gte('created_at', startISOString);
 
     if (ordersError) {
       console.error('Error loading orders:', ordersError);
@@ -42,21 +62,12 @@ export function Dashboard() {
       return;
     }
 
-    const { data: todayOrders, error: todayError } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('status', 'completed')
-      .gte('created_at', todayStart);
-
-    if (todayError) {
-      console.error('Error loading today orders:', todayError);
-      setLoading(false);
-      return;
-    }
+    const filteredOrderIds = (filteredOrders || []).map(order => order.id);
 
     const { data: orderItems, error: itemsError } = await supabase
       .from('order_items')
-      .select('*');
+      .select('*')
+      .in('order_id', filteredOrderIds);
 
     if (itemsError) {
       console.error('Error loading order items:', itemsError);
@@ -64,16 +75,15 @@ export function Dashboard() {
       return;
     }
 
-    const todayTotal = (todayOrders || []).reduce((sum, order) => sum + order.total, 0);
-    const totalRevenue = (allOrders || []).reduce((sum, order) => sum + order.total, 0);
-    const averageOrderValue = (allOrders || []).length > 0
-      ? totalRevenue / (allOrders || []).length
+    const filteredTotal = (filteredOrders || []).reduce((sum, order) => sum + order.total, 0);
+    const averageOrderValue = (filteredOrders || []).length > 0
+      ? filteredTotal / (filteredOrders || []).length
       : 0;
 
     setStats({
-      todayTotal,
-      todayOrders: (todayOrders || []).length,
-      totalOrders: (allOrders || []).length,
+      todayTotal: filteredTotal,
+      todayOrders: (filteredOrders || []).length,
+      totalOrders: (filteredOrders || []).length,
       averageOrderValue,
     });
 
@@ -143,10 +153,30 @@ export function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tableau de bord</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Tableau de bord</h1>
         <p className="text-gray-600">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
+        <div className="flex gap-2 mt-4 flex-wrap">
+          {([
+            { key: 'today', label: "Aujourd'hui" },
+            { key: 'yesterday', label: 'Hier' },
+            { key: 'week', label: '7 derniers jours' },
+            { key: 'month', label: '30 derniers jours' },
+          ] as const).map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === f.key
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -155,7 +185,7 @@ export function Dashboard() {
           return (
             <div
               key={card.label}
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4"
+              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-4 md:p-6 border-l-4"
               style={{ borderColor: card.textColor.replace('text-', 'var(--color-)') }}
             >
               <div className="flex items-center justify-between mb-2">
@@ -164,7 +194,7 @@ export function Dashboard() {
                   <Icon className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <p className={`text-3xl font-bold ${card.textColor}`}>{card.value}</p>
+              <p className={`text-2xl md:text-3xl font-bold ${card.textColor}`}>{card.value}</p>
             </div>
           );
         })}

@@ -1015,7 +1015,7 @@ export function ManagerDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Caisse enregistreuse Quickitchen</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Caisse enregistreuse Quickitchen</h1>
         <p className="text-gray-600">Tableau de bord de gestion et analytique multi-succursales</p>
       </div>
 
@@ -1077,12 +1077,12 @@ export function ManagerDashboard() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-brand-500">
+        <div className="bg-white rounded-xl shadow-md p-4 md:p-6 border-l-4 border-brand-500">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-700">Revenu total</h3>
             <DollarSign className="w-6 h-6 text-brand-600" />
           </div>
-          <p className="text-3xl font-bold text-brand-600 mb-2">
+          <p className="text-2xl md:text-3xl font-bold text-brand-600 mb-2">
             {totalCompanyRevenue.toFixed(2)} dh
           </p>
           <p className="text-sm text-gray-500">{totalCompanyOrders} commandes</p>
@@ -1093,7 +1093,7 @@ export function ManagerDashboard() {
             <h3 className="text-lg font-semibold text-gray-700">Revenu moyen</h3>
             <TrendingUp className="w-6 h-6 text-blue-600" />
           </div>
-          <p className="text-3xl font-bold text-blue-600 mb-2">
+          <p className="text-2xl md:text-3xl font-bold text-blue-600 mb-2">
             {totalCompanyOrders > 0
               ? (totalCompanyRevenue / totalCompanyOrders).toFixed(2)
               : '0.00'} dh
@@ -1106,7 +1106,7 @@ export function ManagerDashboard() {
             <h3 className="text-lg font-semibold text-gray-700">Commandes en attente</h3>
             <Clock className="w-6 h-6 text-orange-600" />
           </div>
-          <p className="text-3xl font-bold text-orange-600 mb-2">{totalPendingOrders}</p>
+          <p className="text-2xl md:text-3xl font-bold text-orange-600 mb-2">{totalPendingOrders}</p>
           <p className="text-sm text-gray-500">À traiter</p>
         </div>
 
@@ -1115,7 +1115,7 @@ export function ManagerDashboard() {
             <h3 className="text-lg font-semibold text-gray-700">Taux de conversion</h3>
             <Users className="w-6 h-6 text-purple-600" />
           </div>
-          <p className="text-3xl font-bold text-purple-600 mb-2">
+          <p className="text-2xl md:text-3xl font-bold text-purple-600 mb-2">
             {totalCompanyOrders + totalPendingOrders > 0
               ? ((totalCompanyOrders / (totalCompanyOrders + totalPendingOrders)) * 100).toFixed(1)
               : '0.0'}%
@@ -1231,7 +1231,7 @@ export function ManagerDashboard() {
             <div className="space-y-4">
               <div className="bg-gradient-to-br from-brand-50 to-brand-100 p-4 rounded-lg">
                 <p className="text-sm text-brand-700 font-medium">Revenu {timeRange}</p>
-                <p className="text-3xl font-bold text-brand-600 mt-1">
+                <p className="text-2xl md:text-3xl font-bold text-brand-600 mt-1">
                   {getCurrentRevenue(selectedStats).toFixed(2)} dh
                 </p>
                 {selectedStats.previousPeriodRevenue > 0 && (
@@ -1242,7 +1242,7 @@ export function ManagerDashboard() {
               </div>
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
                 <p className="text-sm text-blue-700 font-medium">Commandes {timeRange}</p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">{getCurrentOrders(selectedStats)}</p>
+                <p className="text-2xl md:text-3xl font-bold text-blue-600 mt-1">{getCurrentOrders(selectedStats)}</p>
                 {selectedStats.previousPeriodOrders > 0 && (
                   <p className="text-xs text-blue-600 mt-1">
                     vs {selectedStats.previousPeriodOrders} précédemment
@@ -1251,11 +1251,11 @@ export function ManagerDashboard() {
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
                 <p className="text-sm text-orange-700 font-medium">Commandes en attente</p>
-                <p className="text-3xl font-bold text-orange-600 mt-1">{selectedStats.pendingOrders}</p>
+                <p className="text-2xl md:text-3xl font-bold text-orange-600 mt-1">{selectedStats.pendingOrders}</p>
               </div>
               <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-4 rounded-lg">
                 <p className="text-sm text-slate-700 font-medium">Revenu total historique</p>
-                <p className="text-3xl font-bold text-slate-600 mt-1">
+                <p className="text-2xl md:text-3xl font-bold text-slate-600 mt-1">
                   {selectedStats.totalRevenue.toFixed(2)} dh
                 </p>
               </div>

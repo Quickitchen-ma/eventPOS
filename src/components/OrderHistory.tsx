@@ -80,15 +80,15 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Clock className="w-6 h-6 text-gray-600" />
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Clock className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
             Historique des commandes
           </h2>
           <p className="text-sm text-gray-500 mt-1">Consulter les commandes terminées</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {(['today', 'week', 'all'] as const).map((f) => (
             <button
               key={f}
@@ -119,21 +119,19 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
             >
               <button
                 onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
-                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div className="flex items-center justify-center w-12 h-12 bg-brand-100 rounded-lg">
                     <CheckCircle2 className="w-6 h-6 text-brand-600" />
                   </div>
                   <div className="text-left">
-                    <div className="flex items-center gap-2">
-                      <p className="text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
-                      {user?.role === 'manager' && order.branch_name && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {order.branch_name}
-                        </span>
-                      )}
-                    </div>
+                    {user?.role === 'manager' && order.branch_name && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-1">
+                        {order.branch_name}
+                      </span>
+                    )}
+                    <p className="text-xl md:text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(order.created_at!).toLocaleString('fr-FR')}
                     </p>
@@ -141,7 +139,7 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
                 </div>
                 <div className="text-right flex items-center gap-4">
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">{order.total.toFixed(2)} dh</p>
+                    <p className="text-xl md:text-2xl font-bold text-gray-900">{order.total.toFixed(2)} dh</p>
                     <p className="text-sm text-gray-500">{order.items.length} articles</p>
                   </div>
                   <ChevronRight
