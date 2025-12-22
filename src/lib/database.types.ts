@@ -130,6 +130,50 @@ export type Database = {
         }
         Relationships: []
       }
+      order_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          new_status: string | null
+          order_id: string
+          previous_status: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          new_status?: string | null
+          order_id: string
+          previous_status?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          new_status?: string | null
+          order_id?: string
+          previous_status?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_audit_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -178,27 +222,39 @@ export type Database = {
       orders: {
         Row: {
           branch_id: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          cancellation_reason: string | null
           created_at: string | null
           id: string
           order_number: number
           status: string | null
           total: number
+          was_ready_when_cancelled: boolean | null
         }
         Insert: {
           branch_id?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cancellation_reason?: string | null
           created_at?: string | null
           id?: string
           order_number: number
           status?: string | null
           total: number
+          was_ready_when_cancelled?: boolean | null
         }
         Update: {
           branch_id?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cancellation_reason?: string | null
           created_at?: string | null
           id?: string
           order_number?: number
           status?: string | null
           total?: number
+          was_ready_when_cancelled?: boolean | null
         }
         Relationships: [
           {
@@ -409,6 +465,7 @@ export type Category = Database['public']['Tables']['categories']['Row'];
 export type Product = Database['public']['Tables']['products']['Row'];
 export type Order = Database['public']['Tables']['orders']['Row'];
 export type OrderItem = Database['public']['Tables']['order_items']['Row'];
+export type OrderAuditLog = Database['public']['Tables']['order_audit_logs']['Row'];
 export type Menu = Database['public']['Tables']['menus']['Row'];
 export type MenuCategory = Database['public']['Tables']['menu_categories']['Row'];
 

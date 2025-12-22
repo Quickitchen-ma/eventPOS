@@ -219,6 +219,27 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
       // Update order total
       await supabase.from('orders').update({ total }).eq('id', editingOrderId);
 
+      // Create audit log for order update
+      const { error: auditError } = await supabase
+        .from('order_audit_logs')
+        .insert({
+          order_id: editingOrderId,
+          action: 'updated',
+          user_id: user?.id,
+          user_role: user?.role,
+          details: {
+            updated_at: new Date().toISOString(),
+            new_total: total,
+            item_count: editedItems.length,
+            items_changed: true
+          }
+        });
+
+      if (auditError) {
+        console.error('Error creating audit log:', auditError);
+        // Don't fail the update if audit log fails
+      }
+
       // Reload orders
       loadOrders();
       cancelEditing();
@@ -229,6 +250,18 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
   };
 
   const completeOrder = async (orderId: string) => {
+    // Get current order status for audit log
+    const { data: currentOrder } = await supabase
+      .from('orders')
+      .select('status')
+      .eq('id', orderId)
+      .single();
+
+    if (!currentOrder) {
+      showModal('Erreur', 'Commande introuvable.', { type: 'error' });
+      return;
+    }
+
     const { error } = await supabase
       .from('orders')
       .update({ status: 'completed' })
@@ -237,6 +270,26 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
     if (error) {
       console.error('Error completing order:', error);
       return;
+    }
+
+    // Create audit log entry
+    const { error: auditError } = await supabase
+      .from('order_audit_logs')
+      .insert({
+        order_id: orderId,
+        action: 'completed',
+        previous_status: currentOrder.status,
+        new_status: 'completed',
+        user_id: user?.id,
+        user_role: user?.role,
+        details: {
+          completed_at: new Date().toISOString()
+        }
+      });
+
+    if (auditError) {
+      console.error('Error creating audit log:', auditError);
+      // Don't fail the completion if audit log fails
     }
 
     loadOrders();
@@ -252,15 +305,56 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
         cancelText: 'Garder',
         showCancel: true,
         onConfirm: async () => {
-          const { error } = await supabase
+          const now = new Date().toISOString();
+
+          // Get current order status for audit log
+          const { data: currentOrder } = await supabase
             .from('orders')
-            .update({ status: 'cancelled' })
+            .select('status')
+            .eq('id', orderId)
+            .single();
+
+          if (!currentOrder) {
+            showModal('Erreur', 'Commande introuvable.', { type: 'error' });
+            return;
+          }
+
+          // Update order with cancellation details
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({
+              status: 'cancelled',
+              cancelled_at: now,
+              cancelled_by: user?.id,
+              was_ready_when_cancelled: currentOrder.status === 'completed' // If it was completed, it was ready
+            })
             .eq('id', orderId);
 
-          if (error) {
-            console.error('Error cancelling order:', error);
+          if (updateError) {
+            console.error('Error cancelling order:', updateError);
             showModal('Erreur', 'Erreur lors de l\'annulation de la commande.', { type: 'error' });
             return;
+          }
+
+          // Create audit log entry
+          const { error: auditError } = await supabase
+            .from('order_audit_logs')
+            .insert({
+              order_id: orderId,
+              action: 'cancelled',
+              previous_status: currentOrder.status,
+              new_status: 'cancelled',
+              user_id: user?.id,
+              user_role: user?.role,
+              details: {
+                cancelled_at: now,
+                was_ready_when_cancelled: currentOrder.status === 'completed'
+              }
+            });
+
+          if (auditError) {
+            console.error('Error creating audit log:', auditError);
+            // Don't fail the cancellation if audit log fails
           }
 
           loadOrders();

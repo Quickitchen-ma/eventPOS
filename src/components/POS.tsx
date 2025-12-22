@@ -214,6 +214,27 @@ export function POS({ onOrderCreated }: POSProps) {
         return;
       }
 
+      // Create audit log for order creation
+      const { error: auditError } = await supabase
+        .from('order_audit_logs')
+        .insert({
+          order_id: order.id,
+          action: 'created',
+          new_status: 'pending',
+          user_id: user.id,
+          user_role: user.role,
+          details: {
+            created_at: order.created_at,
+            total: total,
+            item_count: cart.length
+          }
+        });
+
+      if (auditError) {
+        console.error('Error creating audit log:', auditError);
+        // Don't fail the order creation if audit log fails
+      }
+
       setLastOrderNumber(nextOrderNumber);
       setCart([]);
       setShowSuccess(true);

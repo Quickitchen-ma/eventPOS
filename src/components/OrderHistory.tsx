@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock, CheckCircle2, Printer, ChevronRight, Calendar } from 'lucide-react';
+import { Clock, CheckCircle2, Printer, ChevronRight, Calendar, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Order, OrderItem } from '../lib/database.types';
@@ -34,7 +34,7 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
           name
         )
       `)
-      .eq('status', 'completed')
+      .in('status', ['completed', 'cancelled'])
       .order('created_at', { ascending: false });
 
     if (filter === 'today') {
@@ -108,79 +108,104 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
       {orders.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl">
           <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 text-lg">Aucune commande terminée</p>
+          <p className="text-gray-500 text-lg">Aucune commande terminée ou annulée</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 border-brand-500"
-            >
-              <button
-                onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
-                className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          {orders.map((order) => {
+            const isCancelled = order.status === 'cancelled';
+            return (
+              <div
+                key={order.id}
+                className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 ${
+                  isCancelled ? 'border-red-500' : 'border-brand-500'
+                }`}
               >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex items-center justify-center w-12 h-12 bg-brand-100 rounded-lg">
-                    <CheckCircle2 className="w-6 h-6 text-brand-600" />
+                <button
+                  onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                  className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${
+                      isCancelled ? 'bg-red-100' : 'bg-brand-100'
+                    }`}>
+                      {isCancelled ? (
+                        <X className="w-6 h-6 text-red-600" />
+                      ) : (
+                        <CheckCircle2 className="w-6 h-6 text-brand-600" />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      {user?.role === 'manager' && order.branch_name && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-1">
+                          {order.branch_name}
+                        </span>
+                      )}
+                      <p className="text-xl md:text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-500">
+                          {new Date(order.created_at!).toLocaleString('fr-FR')}
+                        </p>
+                        {isCancelled && order.cancelled_at && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Annulée {new Date(order.cancelled_at).toLocaleString('fr-FR')}
+                          </span>
+                        )}
+                        {isCancelled && order.was_ready_when_cancelled && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            Prête lors de l'annulation
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    {user?.role === 'manager' && order.branch_name && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-1">
-                        {order.branch_name}
-                      </span>
-                    )}
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(order.created_at!).toLocaleString('fr-FR')}
-                    </p>
+                  <div className="text-right flex items-center gap-4">
+                    <div>
+                      <p className={`text-xl md:text-2xl font-bold ${isCancelled ? 'text-red-600' : 'text-gray-900'}`}>
+                        {order.total.toFixed(2)} dh
+                      </p>
+                      <p className="text-sm text-gray-500">{order.items.length} articles</p>
+                    </div>
+                    <ChevronRight
+                      className={`w-6 h-6 text-gray-400 transition-transform ${
+                        expandedOrder === order.id ? 'rotate-90' : ''
+                      }`}
+                    />
                   </div>
-                </div>
-                <div className="text-right flex items-center gap-4">
-                  <div>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{order.total.toFixed(2)} dh</p>
-                    <p className="text-sm text-gray-500">{order.items.length} articles</p>
-                  </div>
-                  <ChevronRight
-                    className={`w-6 h-6 text-gray-400 transition-transform ${
-                      expandedOrder === order.id ? 'rotate-90' : ''
-                    }`}
-                  />
-                </div>
-              </button>
+                </button>
 
-              {expandedOrder === order.id && (
-                <div className="border-t border-gray-100 px-6 py-4 space-y-4 bg-gray-50">
-                  <div className="space-y-2">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between py-2">
-                        <div>
-                          <p className="font-medium text-gray-900">{item.product_name}</p>
-                          <p className="text-sm text-gray-500">
-                            {item.quantity} × {item.price.toFixed(2)} dh
+                {expandedOrder === order.id && (
+                  <div className="border-t border-gray-100 px-6 py-4 space-y-4 bg-gray-50">
+                    <div className="space-y-2">
+                      {order.items.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between py-2">
+                          <div>
+                            <p className="font-medium text-gray-900">{item.product_name}</p>
+                            <p className="text-sm text-gray-500">
+                              {item.quantity} × {item.price.toFixed(2)} dh
+                            </p>
+                          </div>
+                          <p className="font-semibold text-gray-900">
+                            {(item.quantity * item.price).toFixed(2)} dh
                           </p>
                         </div>
-                        <p className="font-semibold text-gray-900">
-                          {(item.quantity * item.price).toFixed(2)} dh
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
 
-                  <div className="border-t border-gray-200 pt-4">
-                    <button
-                      onClick={() => onPrint({ ...order, items: order.items })}
-                      className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                    >
-                      <Printer className="w-5 h-5" />
-                      Réimprimer ticket
-                    </button>
+                    <div className="border-t border-gray-200 pt-4">
+                      <button
+                        onClick={() => onPrint({ ...order, items: order.items })}
+                        className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                      >
+                        <Printer className="w-5 h-5" />
+                        Réimprimer ticket
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
