@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Clock, CheckCircle2, Printer, ChevronRight, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import type { Order, OrderItem } from '../lib/database.types';
 
 interface OrderWithItems extends Order {
   items: OrderItem[];
+  branch_name?: string;
 }
 
 interface OrderHistoryProps {
@@ -12,6 +14,7 @@ interface OrderHistoryProps {
 }
 
 export function OrderHistory({ onPrint }: OrderHistoryProps) {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [filter, setFilter] = useState<'today' | 'week' | 'all'>('today');
@@ -25,7 +28,12 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
     setLoading(true);
     let query = supabase
       .from('orders')
-      .select('*')
+      .select(`
+        *,
+        branches (
+          name
+        )
+      `)
       .eq('status', 'completed')
       .order('created_at', { ascending: false });
 
@@ -54,7 +62,11 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
           .from('order_items')
           .select('*')
           .eq('order_id', order.id);
-        return { ...order, items: items || [] };
+        return {
+          ...order,
+          items: items || [],
+          branch_name: (order as any).branches?.name
+        };
       })
     );
 
@@ -83,7 +95,7 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === f
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-brand-600 text-white'
                   : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
               }`}
             >
@@ -103,20 +115,27 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
           {orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 border-emerald-500"
+              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 border-brand-500"
             >
               <button
                 onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
                 className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-lg">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  <div className="flex items-center justify-center w-12 h-12 bg-brand-100 rounded-lg">
+                    <CheckCircle2 className="w-6 h-6 text-brand-600" />
                   </div>
                   <div className="text-left">
-                    <p className="text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-2xl font-bold text-gray-900">Commande n°{order.order_number}</p>
+                      {user?.role === 'manager' && order.branch_name && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {order.branch_name}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleString('fr-FR')}
+                      {new Date(order.created_at!).toLocaleString('fr-FR')}
                     </p>
                   </div>
                 </div>

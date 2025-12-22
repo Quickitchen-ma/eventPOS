@@ -15,10 +15,10 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col h-full">
       <div className="flex items-center gap-2 mb-6">
-        <ShoppingCart className="w-6 h-6 text-emerald-600" />
+        <ShoppingCart className="w-6 h-6 text-brand-600" />
         <h2 className="text-xl font-bold text-gray-900">Commande actuelle</h2>
         {itemCount > 0 && (
-          <span className="ml-auto bg-emerald-600 text-white text-sm font-medium px-3 py-1 rounded-full">
+          <span className="ml-auto bg-brand-600 text-white text-sm font-medium px-3 py-1 rounded-full">
             {itemCount} {itemCount === 1 ? 'article' : 'articles'}
           </span>
         )}
@@ -83,7 +83,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
         <button
           onClick={onCheckout}
           disabled={items.length === 0}
-          className="w-full bg-emerald-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-emerald-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="w-full bg-brand-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-brand-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           Finaliser la commande
         </button>

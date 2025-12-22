@@ -44,7 +44,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
               <img src="/icone.png" alt="Okinawa" className="w-10 h-10 rounded-lg" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">OKINAWA</h1>
-                <p className="text-xs text-gray-500">By QuickKitchen</p>
+                <p className="text-xs text-gray-500">By QuicKitchen</p>
               </div>
             </div>
 
@@ -55,7 +55,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'bg-white text-emerald-600 shadow-md'
+                      ? 'bg-white text-brand-600 shadow-md'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >

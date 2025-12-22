@@ -17,24 +17,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase
+    const { data: userData, error: rpcError } = await supabase
       .rpc('authenticate_user', { user_email: email, user_password: password })
       .maybeSingle();
 
-    if (error || !data) {
+    if (rpcError || !userData) {
       throw new Error('Invalid credentials');
     }
 
-    const userData: User = {
-      id: data.id,
-      email: data.email,
-      role: data.role,
-      branch_id: data.branch_id,
-      full_name: data.full_name,
+    const authResult = await supabase.auth.signInWithPassword({ email, password });
+
+    if (authResult.error) {
+      throw new Error('Failed to authenticate with Supabase');
+    }
+
+    const user: User = {
+      id: userData.id,
+      email: userData.email,
+      role: userData.role as 'manager' | 'cashier',
+      branch_id: userData.branch_id,
+      full_name: userData.full_name,
     };
 
-    setUser(userData);
-    localStorage.setItem('pos_user', JSON.stringify(userData));
+    setUser(user);
+    localStorage.setItem('pos_user', JSON.stringify(user));
   };
 
   const signOut = () => {

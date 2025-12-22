@@ -36,8 +36,8 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
           <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
           <p className="text-sm text-gray-500 mb-2 line-clamp-2">{product.description}</p>
           <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-emerald-600">{product.price.toFixed(2)} dh</span>
-            <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+            <span className="text-lg font-bold text-brand-600">{product.price.toFixed(2)} dh</span>
+            <div className="w-8 h-8 bg-brand-600 rounded-full flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
           </div>

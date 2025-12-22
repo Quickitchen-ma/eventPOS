@@ -24,7 +24,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-gray-50 to-emerald-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-gray-50 to-brand-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
@@ -46,7 +46,7 @@ export function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors"
                 placeholder="votre@email.com"
               />
             </div>
@@ -61,7 +61,7 @@ export function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors"
                 placeholder="••••••••"
               />
             </div>
@@ -76,7 +76,7 @@ export function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-brand-600 text-white py-3 rounded-lg font-semibold hover:bg-brand-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <span>Connexion...</span>
@@ -89,23 +89,7 @@ export function Login() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center mb-3">Comptes de test:</p>
-            <div className="space-y-2 text-xs text-gray-600">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="font-semibold text-gray-700">Manager</p>
-                <p>manager@quickitchen.ma / Can%2025</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="font-semibold text-gray-700">Caissier Meetup</p>
-                <p>cashier.meetup@quickitchen.ma / meetup123</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="font-semibold text-gray-700">Caissier CAN</p>
-                <p>cashier.can@quickitchen.ma / can123</p>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

@@ -114,8 +114,8 @@ export function Dashboard() {
       icon: DollarSign,
       label: "Revenu du jour",
       value: `${stats.todayTotal.toFixed(2)} dh`,
-      color: 'from-emerald-500 to-emerald-600',
-      textColor: 'text-emerald-600',
+      color: 'from-brand-500 to-brand-600',
+      textColor: 'text-brand-600',
     },
     {
       icon: ShoppingCart,
@@ -180,7 +180,7 @@ export function Dashboard() {
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="flex items-center justify-center w-8 h-8 bg-emerald-600 text-white rounded-full font-semibold text-sm">
+                  <div className="flex items-center justify-center w-8 h-8 bg-brand-600 text-white rounded-full font-semibold text-sm">
                     {index + 1}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -188,7 +188,7 @@ export function Dashboard() {
                     <p className="text-sm text-gray-500">{item.quantity} vendus</p>
                   </div>
                 </div>
-                <p className="font-bold text-emerald-600 text-lg">{item.revenue.toFixed(2)} dh</p>
+                <p className="font-bold text-brand-600 text-lg">{item.revenue.toFixed(2)} dh</p>
               </div>
             ))}
           </div>
