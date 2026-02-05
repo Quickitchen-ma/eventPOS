@@ -46,7 +46,13 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
             .select('*, items:order_items(*)')
             .eq('id', payload.new.id)
             .single();
-          if (data) setLastOrder(data);
+          if (data) {
+            setLastOrder(data);
+            // Wait for DOM update, then print
+            setTimeout(() => {
+              window.print();
+            }, 500);
+          }
         }
       )
       .subscribe();

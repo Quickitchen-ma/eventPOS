@@ -250,11 +250,8 @@ export function POS({ onOrderCreated }: POSProps) {
         .single();
 
       if (!fetchError && orderWithItems) {
-        // We use a small delay to ensure the DOM has updated
-        // though with our state management it might be immediate
-        setTimeout(() => {
-          window.print();
-        }, 500);
+        // Printing is now handled by POSLayout's real-time listener
+        // which ensures data synchronization across components.
       }
 
       setTimeout(() => {

@@ -26,12 +26,12 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ order }: Rece
                 <img src="/icone.png" alt="Logo" className="receipt-logo" />
                 <h1>QUICKITCHEN</h1>
                 <p>Asian, Italian, American & Beyond</p>
-                <div className="divider">--------------------------------</div>
+                <div className="receipt-divider" />
                 <div className="order-info">
                     <strong>COMMANDE #{order.order_number}</strong>
                     <p>{timestamp}</p>
                 </div>
-                <div className="divider">--------------------------------</div>
+                <div className="receipt-divider" />
             </div>
 
             <div className="receipt-items">
