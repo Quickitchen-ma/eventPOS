@@ -1,3 +1,149 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media screen {
+  .receipt-container {
+    display: none;
+  }
+}
+
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 58mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Hide main UI but keep the container for the receipt */
+  nav,
+  main,
+  footer,
+  .modal,
+  .no-print {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 58mm;
+    padding: 0;
+    margin: 0;
+  }
+
+  .receipt-container {
+    display: block;
+    font-family: 'Courier New', Courier, monospace;
+    width: 100%;
+    color: black;
+    background: white;
+  }
+
+  .receipt-header {
+    text-align: center;
+    margin-bottom: 4mm;
+  }
+
+  .receipt-logo {
+    width: 15mm;
+    margin: 0 auto 2mm;
+    display: block;
+    filter: grayscale(1) contrast(5);
+  }
+
+  .receipt-header h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .receipt-header p {
+    font-size: 8pt;
+    margin: 1mm 0;
+  }
+
+  .divider {
+    font-size: 8pt;
+    margin: 1mm 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .order-info {
+    font-size: 10pt;
+    margin: 2mm 0;
+  }
+
+  .order-info strong {
+    font-size: 12pt;
+    display: block;
+  }
+
+
+  .receipt-divider {
+    border-bottom: 1pt dashed black;
+    margin: 2mm 0;
+  }
+
+  .receipt-items {
+    margin-bottom: 4mm;
+  }
+
+  .receipt-item {
+    margin-bottom: 1.5mm;
+    font-size: 9pt;
+  }
+
+  .receipt-item-row {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .receipt-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .receipt-item-qty {
+    margin-left: 2mm;
+  }
+
+  .receipt-item-price {
+    text-align: right;
+    font-size: 8pt;
+  }
+
+  .receipt-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11pt;
+    font-weight: bold;
+    margin: 2mm 0;
+  }
+
+  .receipt-footer {
+    text-align: center;
+    font-size: 8pt;
+  }
+
+  .receipt-thanks {
+    margin: 2mm 0 1mm;
+    font-weight: bold;
+  }
+
+  .receipt-url {
+    font-size: 7pt;
+  }
+}

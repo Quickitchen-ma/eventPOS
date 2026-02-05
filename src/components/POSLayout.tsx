@@ -1,18 +1,16 @@
-import { useState, useRef } from 'react';
-import { ShoppingCart, Clock, BarChart3, UtensilsCrossed, TrendingUp, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Layout, LogOut, ShoppingBag, History, LayoutDashboard, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { POS } from './POS';
 import { CurrentOrders } from './CurrentOrders';
 import { OrderHistory } from './OrderHistory';
 import { Dashboard } from './Dashboard';
 import { ManagerDashboard } from './ManagerDashboard';
-import { PrintTicket } from './PrintTicket';
+import { Receipt } from './Receipt';
+import { supabase } from '../lib/supabase';
 import type { Order, OrderItem } from '../lib/database.types';
 import { APP_NAME, APP_VERSION } from '../lib/version';
 
-interface OrderWithItems extends Order {
-  items: OrderItem[];
-}
 
 type TabType = 'pos' | 'current' | 'history' | 'dashboard' | 'manager';
 
@@ -22,16 +20,48 @@ interface POSLayoutProps {
 
 export function POSLayout({ onOrderCreated }: POSLayoutProps) {
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('pos');
-  const [orderToPrint, setOrderToPrint] = useState<OrderWithItems | null>(null);
-  const printRef = useRef<any>(null);
+  const [activeTab, setActiveTab] = useState<string>(
+    user?.role === 'manager' ? 'dashboard' : 'pos'
+  );
+  const [lastOrder, setLastOrder] = useState<any>(null);
+
+  const handlePrint = (order: any) => {
+    setLastOrder(order);
+    // Delay to allow state to propagate to Receipt component
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  };
+
+  useEffect(() => {
+    // Listen for new orders to update the Receipt component
+    const channel = supabase
+      .channel('orders_printing')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        async (payload: any) => {
+          const { data } = await supabase
+            .from('orders')
+            .select('*, items:order_items(*)')
+            .eq('id', payload.new.id)
+            .single();
+          if (data) setLastOrder(data);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const allTabs: Array<{ id: TabType; label: string; icon: React.ReactNode; roles: string[] }> = [
-    { id: 'pos', label: 'Commandes', icon: <ShoppingCart className="w-5 h-5" />, roles: ['manager', 'cashier'] },
-    { id: 'current', label: 'En cours', icon: <Clock className="w-5 h-5" />, roles: ['manager', 'cashier'] },
-    { id: 'history', label: 'Historique', icon: <UtensilsCrossed className="w-5 h-5" />, roles: ['manager', 'cashier'] },
-    { id: 'dashboard', label: 'Tableau de bord', icon: <BarChart3 className="w-5 h-5" />, roles: ['manager', 'cashier'] },
-    { id: 'manager', label: 'Gestion', icon: <TrendingUp className="w-5 h-5" />, roles: ['manager'] },
+    { id: 'pos', label: 'Commandes', icon: <ShoppingBag className="w-5 h-5" />, roles: ['manager', 'cashier'] },
+    { id: 'current', label: 'En cours', icon: <Layout className="w-5 h-5" />, roles: ['manager', 'cashier'] },
+    { id: 'history', label: 'Historique', icon: <History className="w-5 h-5" />, roles: ['manager', 'cashier'] },
+    { id: 'dashboard', label: 'Tableau de bord', icon: <LayoutDashboard className="w-5 h-5" />, roles: ['manager', 'cashier'] },
+    { id: 'manager', label: 'Gestion', icon: <Settings className="w-5 h-5" />, roles: ['manager'] },
   ];
 
   const tabs = allTabs.filter(tab => user && tab.roles.includes(user.role));
@@ -39,7 +69,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-50 to-gray-100">
       {/* Desktop Navigation */}
-      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40 no-print">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-2 md:py-0">
           <div className="flex items-center justify-between h-16 gap-4">
             <div className="flex items-center gap-3">
@@ -55,11 +85,10 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-white text-brand-600 shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                    ? 'bg-white text-brand-600 shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                    }`}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
@@ -85,17 +114,16 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
       </nav>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 no-print">
         <div className="flex justify-around py-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-                activeTab === tab.id
-                  ? 'text-brand-600 bg-brand-50'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${activeTab === tab.id
+                ? 'text-brand-600 bg-brand-50'
+                : 'text-gray-600 hover:text-gray-900'
+                }`}
             >
               {tab.icon}
               <span className="text-xs">{tab.label}</span>
@@ -104,7 +132,7 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-20 md:pb-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 pb-20 md:pb-8 no-print">
         {activeTab === 'pos' && (
           <POS
             onOrderCreated={() => {
@@ -115,16 +143,12 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
         )}
         {activeTab === 'current' && (
           <CurrentOrders
-            onPrint={(order) => {
-              setOrderToPrint(order);
-            }}
+            onPrint={handlePrint}
           />
         )}
         {activeTab === 'history' && (
           <OrderHistory
-            onPrint={(order) => {
-              setOrderToPrint(order);
-            }}
+            onPrint={handlePrint}
           />
         )}
         {activeTab === 'dashboard' && <Dashboard />}
@@ -132,16 +156,15 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="mt-8 text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
+      <footer className="mt-8 text-center text-xs text-gray-500 border-t border-gray-200 pt-4 no-print">
         {APP_NAME} - Version {APP_VERSION}
       </footer>
 
-      {orderToPrint && (
-        <PrintTicket
-          order={orderToPrint}
-          onComplete={() => setOrderToPrint(null)}
-        />
-      )}
+
+      {/* Hidden container for printing */}
+      <div id="print-root">
+        <Receipt order={lastOrder} />
+      </div>
     </div>
   );
 }

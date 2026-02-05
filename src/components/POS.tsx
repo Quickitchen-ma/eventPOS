@@ -96,7 +96,7 @@ export function POS({ onOrderCreated }: POSProps) {
       return;
     }
 
-    const categoriesData = (data || []).map(item => item.categories).filter(Boolean) as Category[];
+    const categoriesData = (data || []).map((item: any) => item.categories).filter(Boolean) as Category[];
     setCategories(categoriesData);
     if (categoriesData.length > 0 && !selectedCategory) {
       setSelectedCategory(categoriesData[0].id);
@@ -121,10 +121,10 @@ export function POS({ onOrderCreated }: POSProps) {
 
 
   const addToCart = (product: Product) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.product.id === product.id);
+    setCart((prevCart: CartItem[]) => {
+      const existingItem = prevCart.find((item: CartItem) => item.product.id === product.id);
       if (existingItem) {
-        return prevCart.map((item) =>
+        return prevCart.map((item: CartItem) =>
           item.product.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
@@ -139,15 +139,15 @@ export function POS({ onOrderCreated }: POSProps) {
       removeFromCart(productId);
       return;
     }
-    setCart((prevCart) =>
-      prevCart.map((item) =>
+    setCart((prevCart: CartItem[]) =>
+      prevCart.map((item: CartItem) =>
         item.product.id === productId ? { ...item, quantity } : item
       )
     );
   };
 
   const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
+    setCart((prevCart: CartItem[]) => prevCart.filter((item: CartItem) => item.product.id !== productId));
   };
 
   const checkout = async () => {
@@ -162,7 +162,7 @@ export function POS({ onOrderCreated }: POSProps) {
     }
 
     try {
-      const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+      const total = cart.reduce((sum: number, item: CartItem) => sum + item.product.price * item.quantity, 0);
 
       const { data: lastOrder, error: lastOrderError } = await supabase
         .from('orders')
@@ -196,7 +196,7 @@ export function POS({ onOrderCreated }: POSProps) {
         return;
       }
 
-      const orderItems = cart.map((item) => ({
+      const orderItems = cart.map((item: CartItem) => ({
         order_id: order.id,
         product_id: item.product.id,
         product_name: item.product.name,
@@ -239,11 +239,29 @@ export function POS({ onOrderCreated }: POSProps) {
       setCart([]);
       setShowSuccess(true);
 
+      // Fetch the full order with items for printing
+      const { data: orderWithItems, error: fetchError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          items:order_items(*)
+        `)
+        .eq('id', order.id)
+        .single();
+
+      if (!fetchError && orderWithItems) {
+        // We use a small delay to ensure the DOM has updated
+        // though with our state management it might be immediate
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
+
       setTimeout(() => {
         setShowSuccess(false);
         setLastOrderNumber(null);
         onOrderCreated?.();
-      }, 1500);
+      }, 3000); // Increased timeout to allow for print dialog
     } catch (error) {
       console.error('Unexpected error during checkout:', error);
       showModal('Erreur inattendue', 'Une erreur inattendue s\'est produite. Veuillez réessayer.', { type: 'error' });
