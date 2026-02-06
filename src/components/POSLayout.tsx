@@ -9,6 +9,7 @@ import { ManagerDashboard } from './ManagerDashboard';
 import { Receipt } from './Receipt';
 import { supabase } from '../lib/supabase';
 import { APP_NAME, APP_VERSION } from '../lib/version';
+import { RawBTService } from '../lib/rawbt';
 
 
 type TabType = 'pos' | 'current' | 'history' | 'dashboard' | 'manager';
@@ -24,12 +25,17 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
   );
   const [lastOrder, setLastOrder] = useState<any>(null);
 
-  const handlePrint = (order: any) => {
-    setLastOrder(order);
-    // Delay to allow state to propagate to Receipt component
-    setTimeout(() => {
-      window.print();
-    }, 300);
+  const handlePrint = async (order: any) => {
+    // Try direct print first
+    const success = await RawBTService.print(order);
+
+    if (!success) {
+      setLastOrder(order);
+      // Delay to allow state to propagate to Receipt component
+      setTimeout(() => {
+        window.print();
+      }, 300);
+    }
   };
 
   useEffect(() => {
@@ -46,11 +52,16 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
             .eq('id', payload.new.id)
             .single();
           if (data) {
-            setLastOrder(data);
-            // Wait for DOM update, then print
-            setTimeout(() => {
-              window.print();
-            }, 500);
+            // Try direct print first
+            const success = await RawBTService.print(data);
+
+            if (!success) {
+              setLastOrder(data);
+              // Wait for DOM update, then print
+              setTimeout(() => {
+                window.print();
+              }, 500);
+            }
           }
         }
       )
