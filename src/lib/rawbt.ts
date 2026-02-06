@@ -6,89 +6,148 @@ export interface Order extends DBOrder {
 
 /**
  * RawBT Printer Service Utility
- * Used to communicate with the RawBT Driver app on Android
- * Default port for RawBT HTTP Server is 40213
+ * Used to communicate with the RawBT Driver app on Android.
+ * Uses custom URI scheme (rawbt:) to bypass HTTPS Mixed Content security blocks.
  */
 export class RawBTService {
-    private static readonly RAWBT_URL = 'http://localhost:40213/print';
-
     /**
-     * Formats an order into ESC/POS commands
+     * Maps French characters to CP850 (typical for thermal printers)
      */
-    private static formatOrder(order: Order): string {
-        const esc = '\x1b';
-        const init = esc + '@';
-        const center = esc + 'a\x01';
-        const left = esc + 'a\x00';
-        const boldOn = esc + 'E\x01';
-        const boldOff = esc + 'E\x00';
-        const doubleHeightOn = esc + '!\x10';
-        const doubleHeightOff = esc + '!\x00';
+    private static encodeCP850(str: string): Uint8Array {
+        const charMap: Record<string, number> = {
+            'é': 0x82, 'à': 0x85, 'è': 0x8A, 'ç': 0x87, 'ù': 0x97,
+            'â': 0x83, 'ê': 0x88, 'î': 0x8C, 'ô': 0x93, 'û': 0x96,
+            'ë': 0x89, 'ï': 0x8B, 'ü': 0x81, '°': 0xF8, '€': 0xD5
+        };
 
-        let commands = init + center;
-
-        // Header
-        commands += boldOn + doubleHeightOn + "QUICKITCHEN\n" + doubleHeightOff + boldOff;
-        commands += "Asian, Italian, American & Beyond\n";
-        commands += "--------------------------------\n";
-
-        // Order Info
-        commands += boldOn + `COMMANDE #${order.order_number}\n` + boldOff;
-        if (order.bip_reference) {
-            commands += boldOn + `BIP: ${order.bip_reference}\n` + boldOff;
+        const bytes = new Uint8Array(str.length);
+        for (let i = 0; i < str.length; i++) {
+            const char = str[i];
+            bytes[i] = charMap[char] || char.charCodeAt(0);
         }
-        if (order.created_at) {
-            const date = new Date(order.created_at).toLocaleString('fr-FR');
-            commands += `${date}\n`;
-        }
-        commands += "--------------------------------\n";
-
-        // Items
-        commands += left;
-        order.items.forEach(item => {
-            const line = `${item.product_name.substring(0, 24)} x${item.quantity}`;
-            const price = `${(item.price * item.quantity).toFixed(2)} dh`;
-            // Simple padding for 32 character width (58mm)
-            const spaces = 32 - line.length - price.length;
-            commands += line + " ".repeat(Math.max(1, spaces)) + price + "\n";
-        });
-
-        // Total
-        commands += "--------------------------------\n";
-        commands += center + boldOn + doubleHeightOn;
-        commands += `TOTAL: ${order.total.toFixed(2)} dh\n`;
-        commands += doubleHeightOff + boldOff;
-        commands += "--------------------------------\n";
-
-        // Footer
-        commands += "Merci de votre visite !\n";
-        commands += "www.quickitchen.ma\n\n\n\n";
-
-        // Cut paper (optional, some printers do it automatically)
-        commands += esc + "V\x41\x03";
-
-        return commands;
+        return bytes;
     }
 
     /**
-     * Attempts to print via RawBT Server
-     * Returns true if successful, false otherwise
+     * Formats an order into ESC/POS binary data
+     */
+    private static formatOrderBinary(order: Order): Uint8Array {
+        const esc = [0x1B];
+        const init = [...esc, 0x40];
+        const center = [...esc, 0x61, 0x01];
+        const left = [...esc, 0x61, 0x00];
+        const boldOn = [...esc, 0x45, 0x01];
+        const boldOff = [...esc, 0x45, 0x00];
+        const doubleSizeOn = [...esc, 0x21, 0x30]; // Double height + Double width
+        const doubleSizeOff = [...esc, 0x21, 0x00];
+
+        const chunks: Uint8Array[] = [];
+
+        const addText = (text: string) => chunks.push(this.encodeCP850(text));
+        const addRaw = (bytes: number[]) => chunks.push(new Uint8Array(bytes));
+
+        addRaw(init);
+        addRaw(center);
+
+        // Header
+        addRaw(boldOn);
+        addRaw(doubleSizeOn);
+        addText("QUICKITCHEN\n");
+        addRaw(doubleSizeOff);
+        addRaw(boldOff);
+        addText("Asian, Italian, American & Beyond\n");
+        addText("--------------------------------\n");
+
+        // Order Info
+        addRaw(boldOn);
+        addText(`COMMANDE #${order.order_number}\n`);
+        if (order.bip_reference) {
+            addText(`BIP: ${order.bip_reference}\n`);
+        }
+        addRaw(boldOff);
+        if (order.created_at) {
+            const date = new Date(order.created_at).toLocaleString('fr-FR');
+            addText(`${date}\n`);
+        }
+        addText("--------------------------------\n");
+
+        // Items
+        addRaw(left);
+        order.items.forEach(item => {
+            const name = item.product_name.substring(0, 22);
+            const qty = `x${item.quantity}`;
+            const price = `${(item.price * item.quantity).toFixed(2)} dh`;
+
+            // Format: Name (22) Qty (4) Price (6) = 32 chars
+            const line = name.padEnd(22) + qty.padStart(4) + price.padStart(6) + "\n";
+            addText(line);
+        });
+
+        // Total
+        addText("--------------------------------\n");
+        addRaw(center);
+        addRaw(boldOn);
+        addRaw(doubleSizeOn);
+        addText(`TOTAL: ${order.total.toFixed(2)} dh\n`);
+        addRaw(doubleSizeOff);
+        addRaw(boldOff);
+        addText("--------------------------------\n");
+
+        // Footer
+        addText("Merci de votre visite !\n");
+        addText("www.quickitchen.ma\n\n\n\n");
+
+        // Cut
+        addRaw([...esc, 0x56, 0x41, 0x03]);
+
+        // Merge all chunks
+        const totalLength = chunks.reduce((acc, curr) => acc + curr.length, 0);
+        const result = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const chunk of chunks) {
+            result.set(chunk, offset);
+            offset += chunk.length;
+        }
+
+        return result;
+    }
+
+    /**
+     * Formats binary data to base64 for the URI scheme
+     */
+    private static bytesToBase64(bytes: Uint8Array): string {
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    }
+
+    /**
+     * Prints via RawBT custom URI scheme
      */
     public static async print(order: Order): Promise<boolean> {
+        // Detect if we are on mobile (simplistic check)
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (!isMobile) {
+            console.log("Desktop detected, falling back to window.print()");
+            return false;
+        }
+
         try {
-            const data = this.formatOrder(order);
+            const binaryData = this.formatOrderBinary(order);
+            const base64 = this.bytesToBase64(binaryData);
 
-            const response = await fetch(this.RAWBT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/octet-stream'
-                },
-                body: data
-            });
+            // Custom RawBT URL scheme
+            const url = `rawbt:base64:${base64}`;
 
-            return response.ok;
+            console.log("Triggering RawBT silent print...");
+            window.location.href = url;
+
+            return true;
         } catch (error) {
-            console.warn('RawBT print failed. Is the app running?', error);
+            console.error('RawBT print scheme failed:', error);
             return false;
         }
     }
