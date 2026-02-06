@@ -22,7 +22,6 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editedItems, setEditedItems] = useState<OrderItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
   const { modalProps, showModal } = useModal();
 
   const getElapsedTime = (createdAt: string) => {
@@ -132,7 +131,6 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
   };
 
   const loadProducts = async () => {
-    setLoadingProducts(true);
     const { data, error } = await supabase
       .from('products')
       .select('*')
@@ -144,7 +142,6 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
     } else {
       setProducts(data || []);
     }
-    setLoadingProducts(false);
   };
 
   const startEditing = (order: OrderWithItems) => {
@@ -422,6 +419,11 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     En préparation
                   </span>
+                  {order.bip_reference && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                      BIP: {order.bip_reference}
+                    </span>
+                  )}
                   <span className="text-xs md:text-sm text-gray-600 truncate">
                     {order.items.length} article{order.items.length > 1 ? 's' : ''}: {order.items.map(item => item.product_name).join(', ')}
                   </span>
@@ -438,9 +440,8 @@ export function CurrentOrders({ onPrint }: CurrentOrdersProps) {
                 </p>
               </div>
               <ChevronRight
-                className={`w-4 h-4 md:w-5 md:h-5 md:w-6 md:h-6 text-gray-400 transition-transform flex-shrink-0 ml-auto ${
-                  expandedOrder === order.id ? 'rotate-90' : ''
-                }`}
+                className={`w-4 h-4 md:w-5 md:h-5 md:w-6 md:h-6 text-gray-400 transition-transform flex-shrink-0 ml-auto ${expandedOrder === order.id ? 'rotate-90' : ''
+                  }`}
               />
             </div>
           </button>

@@ -20,6 +20,7 @@ export function POS({ onOrderCreated }: POSProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState<number | null>(null);
+  const [bipReference, setBipReference] = useState('');
   const { modalProps, showModal } = useModal();
 
   useEffect(() => {
@@ -186,6 +187,7 @@ export function POS({ onOrderCreated }: POSProps) {
           total,
           status: 'pending',
           branch_id: user.branch_id,
+          bip_reference: bipReference || null,
         })
         .select()
         .single();
@@ -226,7 +228,8 @@ export function POS({ onOrderCreated }: POSProps) {
           details: {
             created_at: order.created_at,
             total: total,
-            item_count: cart.length
+            item_count: cart.length,
+            bip_reference: bipReference
           }
         });
 
@@ -237,6 +240,7 @@ export function POS({ onOrderCreated }: POSProps) {
 
       setLastOrderNumber(nextOrderNumber);
       setCart([]);
+      setBipReference('');
       setShowSuccess(true);
 
       // Fetch the full order with items for printing
@@ -286,6 +290,8 @@ export function POS({ onOrderCreated }: POSProps) {
           <div className="sticky top-24">
             <Cart
               items={cart}
+              bipReference={bipReference}
+              onBipReferenceChange={setBipReference}
               onUpdateQuantity={updateQuantity}
               onRemoveItem={removeFromCart}
               onCheckout={checkout}

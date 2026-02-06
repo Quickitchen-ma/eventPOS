@@ -93,11 +93,10 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === f
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === f
                   ? 'bg-brand-600 text-white'
                   : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-              }`}
+                }`}
             >
               {f === 'today' ? "Aujourd'hui" : f === 'week' ? 'Cette semaine' : 'Tout'}
             </button>
@@ -117,18 +116,16 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
             return (
               <div
                 key={order.id}
-                className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 ${
-                  isCancelled ? 'border-red-500' : 'border-brand-500'
-                }`}
+                className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-l-4 ${isCancelled ? 'border-red-500' : 'border-brand-500'
+                  }`}
               >
                 <button
                   onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
                   className="w-full p-4 md:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-4 flex-1">
-                    <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${
-                      isCancelled ? 'bg-red-100' : 'bg-brand-100'
-                    }`}>
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${isCancelled ? 'bg-red-100' : 'bg-brand-100'
+                      }`}>
                       {isCancelled ? (
                         <X className="w-6 h-6 text-red-600" />
                       ) : (
@@ -146,6 +143,11 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
                         <p className="text-sm text-gray-500">
                           {new Date(order.created_at!).toLocaleString('fr-FR')}
                         </p>
+                        {order.bip_reference && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            BIP: {order.bip_reference}
+                          </span>
+                        )}
                         {isCancelled && order.cancelled_at && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             Annulée {new Date(order.cancelled_at).toLocaleString('fr-FR')}
@@ -167,9 +169,8 @@ export function OrderHistory({ onPrint }: OrderHistoryProps) {
                       <p className="text-sm text-gray-500">{order.items.length} articles</p>
                     </div>
                     <ChevronRight
-                      className={`w-6 h-6 text-gray-400 transition-transform ${
-                        expandedOrder === order.id ? 'rotate-90' : ''
-                      }`}
+                      className={`w-6 h-6 text-gray-400 transition-transform ${expandedOrder === order.id ? 'rotate-90' : ''
+                        }`}
                     />
                   </div>
                 </button>

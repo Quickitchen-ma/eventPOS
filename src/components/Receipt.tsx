@@ -29,6 +29,11 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ order }: Rece
                 <div className="receipt-divider" />
                 <div className="order-info">
                     <strong>COMMANDE #{order.order_number}</strong>
+                    {order.bip_reference && (
+                        <div className="bip-reference" style={{ fontSize: '1.2rem', fontWeight: 'bold', marginTop: '4px' }}>
+                            BIP: {order.bip_reference}
+                        </div>
+                    )}
                     <p>{timestamp}</p>
                 </div>
                 <div className="receipt-divider" />

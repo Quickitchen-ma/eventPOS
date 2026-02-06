@@ -3,12 +3,21 @@ import type { CartItem } from '../lib/database.types';
 
 interface CartProps {
   items: CartItem[];
+  bipReference: string;
+  onBipReferenceChange: (value: string) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
 }
 
-export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) {
+export function Cart({
+  items,
+  bipReference,
+  onBipReferenceChange,
+  onUpdateQuantity,
+  onRemoveItem,
+  onCheckout
+}: CartProps) {
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -76,6 +85,22 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem, onCheckout }: Cart
       </div>
 
       <div className="border-t border-gray-200 pt-4 space-y-4">
+        {items.length > 0 && (
+          <div className="space-y-2">
+            <label htmlFor="bip-reference" className="block text-sm font-medium text-gray-700">
+              Référence BIP
+            </label>
+            <input
+              type="number"
+              id="bip-reference"
+              value={bipReference}
+              onChange={(e) => onBipReferenceChange(e.target.value)}
+              placeholder="Numéro du bipper"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all text-lg font-medium"
+            />
+          </div>
+        )}
+
         <div className="flex justify-between items-center">
           <span className="text-lg font-semibold text-gray-700">Total</span>
           <span className="text-2xl font-bold text-gray-900">{total.toFixed(2)} dh</span>
