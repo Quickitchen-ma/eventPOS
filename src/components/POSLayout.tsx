@@ -8,7 +8,6 @@ import { Dashboard } from './Dashboard';
 import { ManagerDashboard } from './ManagerDashboard';
 import { Receipt } from './Receipt';
 import { supabase } from '../lib/supabase';
-import type { Order, OrderItem } from '../lib/database.types';
 import { APP_NAME, APP_VERSION } from '../lib/version';
 
 
@@ -159,6 +158,17 @@ export function POSLayout({ onOrderCreated }: POSLayoutProps) {
         )}
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'manager' && <ManagerDashboard />}
+
+        {/* Floating Action Button for New Order */}
+        {activeTab === 'current' && (
+          <button
+            onClick={() => setActiveTab('pos')}
+            className="fixed bottom-20 md:bottom-8 right-6 bg-brand-600 text-white px-6 py-4 rounded-full shadow-2xl hover:bg-brand-700 transition-all flex items-center gap-2 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300"
+          >
+            <ShoppingBag className="w-6 h-6" />
+            <span className="font-bold text-lg">Nouvelle commande</span>
+          </button>
+        )}
       </main>
 
       {/* Footer */}

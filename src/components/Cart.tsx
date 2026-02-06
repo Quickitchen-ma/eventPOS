@@ -88,7 +88,7 @@ export function Cart({
         {items.length > 0 && (
           <div className="space-y-2">
             <label htmlFor="bip-reference" className="block text-sm font-medium text-gray-700">
-              Référence BIP
+              Référence BIP <span className="text-red-500 font-bold">*(Requis)</span>
             </label>
             <input
               type="number"
@@ -97,6 +97,7 @@ export function Cart({
               onChange={(e) => onBipReferenceChange(e.target.value)}
               placeholder="Numéro du bipper"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all text-lg font-medium"
+              required
             />
           </div>
         )}
@@ -107,7 +108,7 @@ export function Cart({
         </div>
         <button
           onClick={onCheckout}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || !bipReference.trim()}
           className="w-full bg-brand-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-brand-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           Finaliser la commande

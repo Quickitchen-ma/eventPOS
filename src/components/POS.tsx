@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { CheckCircle, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Category, Product, CartItem } from '../lib/database.types';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,6 +21,9 @@ export function POS({ onOrderCreated }: POSProps) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState<number | null>(null);
   const [bipReference, setBipReference] = useState('');
+  const [showAddNotification, setShowAddNotification] = useState(false);
+  const [addedProductName, setAddedProductName] = useState('');
+  const cartRef = useRef<HTMLDivElement>(null);
   const { modalProps, showModal } = useModal();
 
   useEffect(() => {
@@ -133,6 +136,18 @@ export function POS({ onOrderCreated }: POSProps) {
       }
       return [...prevCart, { product, quantity: 1 }];
     });
+
+    // Provide visual feedback
+    setAddedProductName(product.name);
+    setShowAddNotification(true);
+    setTimeout(() => setShowAddNotification(false), 2000);
+
+    // Scroll to cart on mobile
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        cartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -154,6 +169,11 @@ export function POS({ onOrderCreated }: POSProps) {
   const checkout = async () => {
     if (cart.length === 0) {
       console.warn('Cannot checkout with empty cart');
+      return;
+    }
+
+    if (!bipReference.trim()) {
+      showModal('Référence BIP requise', 'Veuillez saisir le numéro du bipper avant de finaliser la commande.', { type: 'warning' });
       return;
     }
 
@@ -242,6 +262,7 @@ export function POS({ onOrderCreated }: POSProps) {
       setCart([]);
       setBipReference('');
       setShowSuccess(true);
+      onOrderCreated?.(); // Trigger redirection immediately
 
       // Fetch the full order with items for printing
       const { data: orderWithItems, error: fetchError } = await supabase
@@ -261,8 +282,7 @@ export function POS({ onOrderCreated }: POSProps) {
       setTimeout(() => {
         setShowSuccess(false);
         setLastOrderNumber(null);
-        onOrderCreated?.();
-      }, 3000); // Increased timeout to allow for print dialog
+      }, 2000); // Reduced timeout as redirection already happened
     } catch (error) {
       console.error('Unexpected error during checkout:', error);
       showModal('Erreur inattendue', 'Une erreur inattendue s\'est produite. Veuillez réessayer.', { type: 'error' });
@@ -286,7 +306,7 @@ export function POS({ onOrderCreated }: POSProps) {
           <ProductGrid products={products} onAddToCart={addToCart} />
         </div>
 
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1" ref={cartRef}>
           <div className="sticky top-24">
             <Cart
               items={cart}
@@ -307,6 +327,13 @@ export function POS({ onOrderCreated }: POSProps) {
             <p className="font-semibold text-lg">Commande créée !</p>
             <p className="text-brand-100">Commande n°{lastOrderNumber}</p>
           </div>
+        </div>
+      )}
+
+      {showAddNotification && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <ShoppingBag className="w-5 h-5 text-brand-400" />
+          <p className="font-medium">{addedProductName} ajouté au panier</p>
         </div>
       )}
 
